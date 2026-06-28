@@ -149,7 +149,8 @@ a:hover { text-decoration: underline; }
   font-size: 13px;
   cursor: pointer;
 }
-.dd-btn .dd-current { flex: 1; display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-btn .dd-current { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; overflow: hidden; }
+.dd-current .dd-role-badge { font-size: 11px; background: var(--accent); color: #0c1320; border-radius: 4px; padding: 1px 5px; font-weight: 700; white-space: nowrap; flex: none; }
 .dd-btn img { width: 18px; height: 18px; border-radius: 4px; flex: none; }
 .dd-arrow { color: var(--muted); font-size: 11px; }
 .dd-menu {

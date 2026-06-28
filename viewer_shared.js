@@ -444,12 +444,27 @@ function updateDropdownUI(dd) {
   } else {
     const sel = dd.items.filter(it => dd.values.has(it.value));
     if (sel.some(it => it.icon)) {
-      // アイコンあり: countぶん繰り返して表示
-      cur.innerHTML = sel.map(it => {
-        const count = dd.withCounts ? (dd.counts.get(it.value) || 1) : 1;
-        const img = `<img src="${it.icon}" title="${escapeAttr(it.label)}">`;
-        return Array(count).fill(img).join('');
-      }).join('');
+      if (dd.roleGroups) {
+        // ロール内の全ジョブが選択済みならロール名バッジで集約し、残りはアイコン表示
+        const covered = new Set();
+        const parts = [];
+        for (const rg of dd.roleGroups) {
+          const inItems = rg.jobs.filter(j => dd.items.some(it => it.value === j));
+          if (inItems.length > 0 && inItems.every(j => dd.values.has(j))) {
+            parts.push(`<span class="dd-role-badge">${rg.label}</span>`);
+            inItems.forEach(j => covered.add(j));
+          }
+        }
+        const remaining = sel.filter(it => !covered.has(it.value));
+        cur.innerHTML = parts.join('') + remaining.map(it => `<img src="${it.icon}" title="${escapeAttr(it.label)}">`).join('');
+      } else {
+        // アイコンあり: countぶん繰り返して表示
+        cur.innerHTML = sel.map(it => {
+          const count = dd.withCounts ? (dd.counts.get(it.value) || 1) : 1;
+          const img = `<img src="${it.icon}" title="${escapeAttr(it.label)}">`;
+          return Array(count).fill(img).join('');
+        }).join('');
+      }
     } else {
       // アイコンなし: ラベルを並べて表示
       cur.textContent = sel.map(it => it.label).join(' · ');
