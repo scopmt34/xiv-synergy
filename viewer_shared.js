@@ -310,6 +310,7 @@ function createMultiDropdown(containerId, opts) {
     withCounts: !!opts.withCounts,
     counts: new Map(),
     maxCount: opts.maxCount || 3,
+    multiDisplay: opts.multiDisplay || null,
     root,
     btn: root.querySelector('.dd-btn'),
     menu: root.querySelector('.dd-menu'),
@@ -434,6 +435,15 @@ function updateDropdownUI(dd) {
     const v = Array.from(dd.values)[0];
     const it = dd.items.find(x => x.value === v);
     cur.innerHTML = it && it.icon ? `<img src="${it.icon}">${it.label}` : (it ? it.label : v);
+  } else if (dd.multiDisplay === 'icons') {
+    cur.innerHTML = dd.items.filter(it => dd.values.has(it.value)).map(it => {
+      const count = dd.withCounts ? (dd.counts.get(it.value) || 1) : 1;
+      const img = it.icon
+        ? `<img src="${it.icon}" title="${escapeAttr(it.label)}">`
+        : `<span style="font-size:10px">${it.label.slice(0,2)}</span>`;
+      const cnt = count > 1 ? `<span style="font-size:10px;color:var(--muted);flex:none">×${count}</span>` : '';
+      return img + cnt;
+    }).join('');
   } else {
     cur.textContent = `${n}件選択中`;
   }

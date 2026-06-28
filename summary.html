@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FFLogs シナジー サマリー</title>
-<link rel="stylesheet" href="viewer_shared.css?v=23">
+<link rel="stylesheet" href="viewer_shared.css?v=24">
 </head>
 <body>
 
@@ -22,14 +22,14 @@
 <div class="panel">
   <div class="layout-2col">
     <div class="filters-col">
-      <div class="field"><label>零式(1つ選択)</label><div class="dropdown" id="f-tier"></div></div>
-      <div class="field"><label>ボス(1つ選択)</label><div class="dropdown" id="f-boss"></div></div>
-      <div class="field" id="job-field"><label>ジョブ(複数選択可)</label><div class="dropdown" id="f-job"></div></div>
-      <div class="field" id="buff-single-field"><label>シナジー(1つ選択・チャート用)</label><div class="dropdown" id="f-buff-single"></div></div>
-      <div class="field" id="buff-multi-field"><label>シナジー(複数選択可)</label><div class="dropdown" id="f-buff-multi"></div></div>
-      <div class="field"><label>地域(複数選択可)</label><div class="dropdown" id="f-region"></div></div>
-      <div class="field" id="own-field"><label>本人/同席(複数選択可)</label><div class="dropdown" id="f-own"></div></div>
-      <div class="field"><label>取得ランク数(上位何位まで使うか)</label>
+      <div class="field"><label>零式</label><div class="dropdown" id="f-tier"></div></div>
+      <div class="field"><label>ボス</label><div class="dropdown" id="f-boss"></div></div>
+      <div class="field" id="job-field"><label>ジョブ</label><div class="dropdown" id="f-job"></div></div>
+      <div class="field" id="buff-single-field"><label>シナジー(チャート)</label><div class="dropdown" id="f-buff-single"></div></div>
+      <div class="field" id="buff-multi-field"><label>シナジー</label><div class="dropdown" id="f-buff-multi"></div></div>
+      <div class="field"><label>地域</label><div class="dropdown" id="f-region"></div></div>
+      <div class="field" id="own-field"><label>本人/同席</label><div class="dropdown" id="f-own"></div></div>
+      <div class="field"><label>取得ランク数</label>
         <input type="number" id="f-rank-max" placeholder="空欄=全件">
       </div>
       <div class="field"><label>並び順 / 表示</label>
@@ -58,13 +58,13 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=23"></script>
+<script src="viewer_shared.js?v=24"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
-const ddJob = createMultiDropdown('f-job', { roleGroups: ROLE_GROUPS });
+const ddJob = createMultiDropdown('f-job', { roleGroups: ROLE_GROUPS, multiDisplay: 'icons' });
 const ddBuffSingle = createMultiDropdown('f-buff-single', { single: true });
-const ddBuffMulti = createMultiDropdown('f-buff-multi');
+const ddBuffMulti = createMultiDropdown('f-buff-multi', { multiDisplay: 'icons' });
 const ddRegion = createMultiDropdown('f-region');
 const ddOwn = createMultiDropdown('f-own');
 fillMultiDropdown(ddTier, TIERS.map(t => t.key), null, k => TIERS.find(t => t.key === k).label);
