@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FFLogs シナジー ランキングビューア</title>
-<link rel="stylesheet" href="viewer_shared.css?v=24">
+<link rel="stylesheet" href="viewer_shared.css?v=25">
 </head>
 <body>
 
@@ -45,17 +45,17 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=24"></script>
+<script src="viewer_shared.js?v=25"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
-const ddJob = createMultiDropdown('f-job', { roleGroups: ROLE_GROUPS, multiDisplay: 'icons' });
-const ddBuff = createMultiDropdown('f-buff', { multiDisplay: 'icons' });
+const ddJob = createMultiDropdown('f-job', { roleGroups: ROLE_GROUPS });
+const ddBuff = createMultiDropdown('f-buff');
 const ddRegion = createMultiDropdown('f-region');
 const ddOwn = createMultiDropdown('f-own');
 // 編成フィルターは選択ジョブ全部を含む(AND)前提。さらに侍・暗黒騎士などが編成内に複数人いる場合も
 // 絞り込めるよう、ドロップダウン内で各ジョブごとに「何人以上必要か」をクリックで1→2→3→1と切り替えられるようにする(withCounts)。
-const ddComp = createMultiDropdown('f-comp', { withCounts: true, maxCount: 2, multiDisplay: 'icons' });
+const ddComp = createMultiDropdown('f-comp', { withCounts: true, maxCount: 2 });
 fillMultiDropdown(ddTier, TIERS.map(t => t.key), null, k => TIERS.find(t => t.key === k).label);
 fillMultiDropdown(ddOwn, ['True', 'False'], null, v => v === 'True' ? '本人' : '同席');
 fillMultiDropdown(ddComp, JOB_ORDER, j => jobMeta(j).icon, j => jobMeta(j).jp);
