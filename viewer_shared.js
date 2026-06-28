@@ -212,18 +212,14 @@ function partyCompFullHtml(selfJob, othersCsv, compCounts) {
     let filterType = 'comp';
     if (reqCount > 0) {
       if (occ < reqCount) {
-        if (occ === 0) {
-          // 1つ目: selfは黄色(.self枠)で対応済み; non-selfは青色(comp-filtered)
-          if (!it.self) extraClass = 'comp-filtered';
-          filterType = 'comp';    // クリック → フィルター削除
+        if (it.self) {
+          filterType = 'comp';     // self(黄色): クリック → トグル
         } else {
-          // 2つ目以降: 青色
           extraClass = 'comp-filtered';
-          filterType = 'comp-dec'; // クリック → カウント−1
+          filterType = 'comp-dec'; // 青色: クリック → −1(count=1なら削除)
         }
       } else {
-        // 強調なし・同ジョブ: クリック → カウント+1
-        filterType = 'comp-inc';
+        filterType = 'comp-inc';   // 非強調・同ジョブ: クリック → +1
       }
     }
     return jobChip(it.job, true, it.self, filterType, extraClass);
