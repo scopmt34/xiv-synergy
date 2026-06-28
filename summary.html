@@ -44,10 +44,10 @@
       <div class="meta" id="meta"></div>
 
       <div id="chart-section">
-        <h2>ジョブ別バーチャート(このボス・このシナジーでのジョブ比較)</h2>
+        <h2>ジョブ別バーチャート</h2>
         <div class="bar-legend" id="bar-legend">
           <span><span class="legend-swatch legend-avg"></span>平均DPS</span>
-          <span><span class="legend-swatch legend-top1"></span>トップ1(rank=1)DPS</span>
+          <span><span class="legend-swatch legend-top1"></span>トップ1</span>
         </div>
         <div id="chart" class="chart-wrap"></div>
       </div>
@@ -124,11 +124,9 @@ function applyData(rows) {
   fillMultiDropdown(ddRegion, uniqueSorted(data, 'region').filter(Boolean), null, v => v);
 
   document.getElementById('matrix-title').textContent =
-    taken ? 'ジョブ×シナジー マトリクス(縦軸:受け取ったジョブ、横軸:シナジー)'
-          : '与シナジー ランキング(このボスでの、シナジー(ジョブ)別)';
-  document.getElementById('matrix-note').textContent =
-    taken ? '列の絞り込みは行われず、選択中のボス・ジョブ・地域などの条件下で存在する全シナジーを表示します。チャート用に選んだシナジーの列は背景色で強調され、その列の値でジョブの行を並び替えます。'
-          : '';
+    taken ? 'ジョブ×シナジー マトリクス'
+          : '与シナジー ランキング';
+  document.getElementById('matrix-note').textContent = '';
   document.getElementById('page-note').textContent = '';
   const mtx = document.querySelector('#matrix');
   mtx.style.minWidth = '';

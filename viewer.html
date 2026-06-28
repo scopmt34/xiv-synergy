@@ -56,7 +56,7 @@ const ddRegion = createMultiDropdown('f-region');
 const ddOwn = createMultiDropdown('f-own');
 // 編成フィルターは選択ジョブ全部を含む(AND)前提。さらに侍・暗黒騎士などが編成内に複数人いる場合も
 // 絞り込めるよう、ドロップダウン内で各ジョブごとに「何人以上必要か」をクリックで1→2→3→1と切り替えられるようにする(withCounts)。
-const ddComp = createMultiDropdown('f-comp', { roleGroups: ROLE_GROUPS, withCounts: true });
+const ddComp = createMultiDropdown('f-comp', { withCounts: true });
 fillMultiDropdown(ddTier, TIERS.map(t => t.key), null, k => TIERS.find(t => t.key === k).label);
 fillMultiDropdown(ddOwn, ['True', 'False'], null, v => v === 'True' ? '本人' : '同席');
 fillMultiDropdown(ddComp, JOB_ORDER, j => jobMeta(j).icon, j => jobMeta(j).jp);
@@ -130,6 +130,9 @@ function applyTableFilterClick(type, value) {
   if (type === 'job') setDropdownToSingle(ddJob, value);
   else if (type === 'buff') setDropdownToSingle(ddBuff, value);
   else if (type === 'player') document.getElementById('f-search').value = value;
+  else if (type === 'comp') {
+    if (!ddComp.counts.has(value)) { ddComp.counts.set(value, 1); ddComp.values.add(value); updateDropdownUI(ddComp); }
+  }
   render();
 }
 

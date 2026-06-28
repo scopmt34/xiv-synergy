@@ -180,14 +180,14 @@ function bossIcon(name) {
 function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-function jobChip(job, mini, self) {
+function jobChip(job, mini, self, filterType = 'job') {
   const m = jobMeta(job);
   const color = self ? '#ffd24a' : jobColor(job);
   const icon = m.icon
     ? `<img class="jobicon${mini ? ' mini' : ''}${self ? ' self' : ''}" src="${m.icon}" title="${m.jp}${self ? '(本人)' : ''}">`
     : `<span class="jobdot${mini ? ' mini' : ''}" style="background:#666">${m.abbr.slice(0,2)}</span>`;
   const label = mini ? '' : `<span style="color:${color}">${m.jp}</span>`;
-  return `<span class="jobchip cell-filter${self ? ' self' : ''}" data-filter-type="job" data-filter-value="${escapeAttr(job)}">${icon}${label}</span>`;
+  return `<span class="jobchip cell-filter${self ? ' self' : ''}" data-filter-type="${filterType}" data-filter-value="${escapeAttr(job)}">${icon}${label}</span>`;
 }
 function formatDuration(sec) {
   sec = Math.round(parseFloat(sec) || 0);
@@ -198,7 +198,7 @@ function partyCompFullHtml(selfJob, othersCsv) {
   const others = othersCsv ? othersCsv.split(',').filter(j => JOB_ORDER.includes(j)) : [];
   const list = others.map(j => ({ job: j, self: false })).concat([{ job: selfJob, self: true }]);
   list.sort((a, b) => jobOrderIndex(a.job) - jobOrderIndex(b.job));
-  return `<span class="partycomp">${list.map(it => jobChip(it.job, true, it.self)).join('')}</span>`;
+  return `<span class="partycomp">${list.map(it => jobChip(it.job, true, it.self, 'comp')).join('')}</span>`;
 }
 function buffIconUrl(icon) {
   return icon ? `https://assets.rpglogs.com/img/ff/abilities/${icon}` : '';
@@ -295,6 +295,11 @@ function createMultiDropdown(containerId, opts) {
     e.stopPropagation();
     document.querySelectorAll('.dd-menu.open').forEach(m => { if (m !== dd.menu) m.classList.remove('open'); });
     dd.menu.classList.toggle('open');
+    if (dd.menu.classList.contains('open')) {
+      dd.menu.style.top = '100%'; dd.menu.style.bottom = 'auto';
+      const rect = dd.menu.getBoundingClientRect();
+      if (rect.bottom > window.innerHeight) { dd.menu.style.top = 'auto'; dd.menu.style.bottom = '100%'; }
+    }
   });
   dd.menu.addEventListener('click', e => e.stopPropagation());
   const clearBtn = dd.menu.querySelector('.dd-clear');
