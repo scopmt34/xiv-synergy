@@ -5,7 +5,7 @@
 cache/
 
 # ボスごとの生ログCSV (各70MB前後、公開サイトでは不要)
-output/*_synergy.csv
+output/[0-9]*_synergy.csv
 
 # バックアップ
 output_backup_*/
