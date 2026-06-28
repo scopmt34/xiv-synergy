@@ -1,0 +1,22 @@
+# FFLogs認証情報 - 絶対に公開しない
+.env
+
+# APIレスポンスキャッシュ (数百MB規模)
+cache/
+
+# ボスごとの生ログCSV (各70MB前後、公開サイトでは不要)
+output/*_synergy.csv
+
+# バックアップ
+output_backup_*/
+
+# 取得ログ
+fetch_*_log.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# スクラッチ
+*.tmp

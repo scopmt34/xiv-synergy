@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>FFLogs シナジー ランキングビューア</title>
+<link rel="stylesheet" href="viewer_shared.css?v=18">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="viewer.html" class="active">ランキング</a>
+  <a href="summary.html">サマリー</a>
+</nav>
+
+<h1>FFLogs AAC シナジー ランキングビューア</h1>
+
+<div class="tabs">
+  <div class="tab active" data-mode="taken">返したDPS(シナジーを貰った側)</div>
+  <div class="tab" data-mode="given">返されたDPS(シナジーを与えた側)</div>
+</div>
+
+<div class="panel">
+  <div class="layout-2col">
+    <div class="filters-col">
+      <div class="field"><label>零式(1つ選択)</label><div class="dropdown" id="f-tier"></div></div>
+      <div class="field"><label>ボス(1つ選択)</label><div class="dropdown" id="f-boss"></div></div>
+      <div class="field" id="job-field"><label>ジョブ(複数選択可)</label><div class="dropdown" id="f-job"></div></div>
+      <div class="field"><label>シナジー(複数選択可)</label><div class="dropdown" id="f-buff"></div></div>
+      <div class="field"><label>地域(複数選択可)</label><div class="dropdown" id="f-region"></div></div>
+      <div class="field"><label>本人/同席(複数選択可)</label><div class="dropdown" id="f-own"></div></div>
+      <div class="field"><label>プレイヤー検索</label><input type="text" id="f-search" placeholder="名前で検索"></div>
+      <div class="field"><label>ジョブ内順位(上位何位まで)</label>
+        <input type="number" id="f-rank-max" placeholder="例: 10">
+      </div>
+      <div class="field"><label>討伐時間(秒)</label>
+        <div class="range-pair">
+          <input type="number" id="f-dur-min" placeholder="以上"><span>〜</span><input type="number" id="f-dur-max" placeholder="以下">
+        </div>
+      </div>
+      <div class="field"><label>編成(8人)に含むジョブ(複数選択可、人数も指定可)</label><div class="dropdown" id="f-comp"></div></div>
+    </div>
+    <div class="data-col">
+      <div class="meta" id="meta"></div>
+      <div class="tablewrap"><table id="table"><thead></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<script src="viewer_shared.js?v=18"></script>
+<script>
+const ddTier = createMultiDropdown('f-tier', { single: true });
+const ddBoss = createMultiDropdown('f-boss', { single: true });
+const ddJob = createMultiDropdown('f-job', { roleGroups: ROLE_GROUPS });
+const ddBuff = createMultiDropdown('f-buff');
+const ddRegion = createMultiDropdown('f-region');
+const ddOwn = createMultiDropdown('f-own');
+// 編成フィルターは選択ジョブ全部を含む(AND)前提。さらに侍・暗黒騎士などが編成内に複数人いる場合も
+// 絞り込めるよう、ドロップダウン内で各ジョブごとに「何人以上必要か」をクリックで1→2→3→1と切り替えられるようにする(withCounts)。
+const ddComp = createMultiDropdown('f-comp', { roleGroups: ROLE_GROUPS, withCounts: true });
+fillMultiDropdown(ddTier, TIERS.map(t => t.key), null, k => TIERS.find(t => t.key === k).label);
+fillMultiDropdown(ddOwn, ['True', 'False'], null, v => v === 'True' ? '本人' : '同席');
+fillMultiDropdown(ddComp, JOB_ORDER, j => jobMeta(j).icon, j => jobMeta(j).jp);
+ddTier.onChange = () => {
+  const tier = [...ddTier.values][0];
+  const bosses = (TIERS.find(t => t.key === tier)?.bosses || [])
+    .filter(b => data.some(r => r.boss === b));
+  fillMultiDropdown(ddBoss, bosses, bossIcon, bossJp);
+  render();
+};
+[ddBoss, ddJob, ddBuff, ddRegion, ddOwn, ddComp].forEach(dd => dd.onChange = render);
+
+let mode = 'taken';
+let data = [];
+let sortState = { col: 'dps_value', dir: -1 };
+const dataCache = { taken: null, given: null };
+
+function applyData(rows) {
+  dataCache[mode] = rows;
+  data = rows;
+  // 初回ロード時: ティアドロップダウンに合わせてボスを絞り込む
+  const tier = [...ddTier.values][0] || TIERS[0].key;
+  if (!ddTier.values.size) { ddTier.values.add(TIERS[0].key); updateDropdownUI(ddTier); }
+  const allBosses = uniqueSorted(data, 'boss').sort((a, b) => BOSS_ORDER.indexOf(a) - BOSS_ORDER.indexOf(b));
+  const tierBosses = allBosses.filter(b => tierOfBoss(b) === tier);
+  const bosses = tierBosses.length ? tierBosses : allBosses;
+  fillMultiDropdown(ddBoss, bosses, bossIcon, bossJp);
+  // 与えたシナジー(given)はジョブを一意に決めるので、givenタブではジョブフィルターは不要
+  document.getElementById('job-field').style.display = mode === 'given' ? 'none' : '';
+  if (mode === 'given') { ddJob.values.clear(); updateDropdownUI(ddJob); }
+  const jobs = uniqueSorted(data, 'job').sort((a, b) => jobOrderIndex(a) - jobOrderIndex(b));
+  fillMultiDropdown(ddJob, jobs, j => jobMeta(j).icon, j => jobMeta(j).jp);
+  const buffCol = mode === 'taken' ? 'buff_received' : 'buff_given';
+  const buffs = uniqueSorted(data, buffCol).sort((a, b) => buffJobOrderIndex(a) - buffJobOrderIndex(b));
+  fillMultiDropdown(ddBuff, buffs, b => BUFF_ICON[b] || '', buffJp);
+  fillMultiDropdown(ddRegion, uniqueSorted(data, 'region').filter(Boolean), null, v => v);
+  const ranks = data.map(r => parseInt(r.rank)).filter(n => !isNaN(n));
+  const maxRank = ranks.length ? ranks.reduce((a, b) => a > b ? a : b, 0) : null;
+  document.getElementById('f-rank-max').placeholder = maxRank ? `例: 10 (最大${maxRank})` : '例: 10';
+  const tbl = document.querySelector('#table');
+  tbl.style.minWidth = '';
+  render();
+  requestAnimationFrame(() => { tbl.style.minWidth = tbl.offsetWidth + 'px'; });
+}
+
+async function loadMode(m) {
+  mode = m;
+  if (dataCache[m]) { applyData(dataCache[m]); return; }
+  document.getElementById('meta').textContent = '読み込み中...';
+  let rows;
+  try {
+    rows = await fetchCsvRows(m);
+  } catch (e) {
+    document.getElementById('meta').textContent = '読み込みに失敗しました。start_viewer.bat でローカルサーバーを起動してください。';
+    return;
+  }
+  applyData(rows);
+}
+
+['f-search', 'f-rank-max', 'f-dur-min', 'f-dur-max'].forEach(id =>
+  document.getElementById(id).addEventListener('input', render));
+
+document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  loadMode(tab.dataset.mode);
+}));
+
+// ===== テーブル内セルクリックでの絞り込み(クリックした値だけに絞る) =====
+function applyTableFilterClick(type, value) {
+  if (type === 'job') setDropdownToSingle(ddJob, value);
+  else if (type === 'buff') setDropdownToSingle(ddBuff, value);
+  else if (type === 'player') document.getElementById('f-search').value = value;
+  render();
+}
+
+function render() {
+  const buffCol = mode === 'taken' ? 'buff_received' : 'buff_given';
+  const search = document.getElementById('f-search').value.toLowerCase();
+  const rankMax = parseFloat(document.getElementById('f-rank-max').value);
+  const durMin = parseFloat(document.getElementById('f-dur-min').value);
+  const durMax = parseFloat(document.getElementById('f-dur-max').value);
+
+  let rows = data.filter(r => {
+    if (ddBoss.values.size && !ddBoss.values.has(r.boss)) return false;
+    if (mode === 'taken' && ddJob.values.size && !ddJob.values.has(r.job)) return false;
+    if (ddBuff.values.size && !ddBuff.values.has(r[buffCol])) return false;
+    if (ddRegion.values.size && !ddRegion.values.has(r.region)) return false;
+    if (ddOwn.values.size && !ddOwn.values.has(r.is_own_ranked_log)) return false;
+    if (search && !r.player.toLowerCase().includes(search)) return false;
+    const rankVal = parseInt(r.rank);
+    if (!isNaN(rankMax) && rankVal > rankMax) return false;
+    const durVal = parseFloat(r.duration_sec);
+    if (!isNaN(durMin) && durVal < durMin) return false;
+    if (!isNaN(durMax) && durVal > durMax) return false;
+    if (ddComp.counts.size) {
+      const compArr = [r.job].concat(r.party_comp_others ? r.party_comp_others.split(',') : []);
+      const tally = {};
+      compArr.forEach(j => { tally[j] = (tally[j] || 0) + 1; });
+      const matches = Array.from(ddComp.counts.entries()).every(([j, n]) => (tally[j] || 0) >= n);
+      if (!matches) return false;
+    }
+    return true;
+  });
+
+  rows.sort((x, y) => {
+    const a = x[sortState.col], b = y[sortState.col];
+    const na = parseFloat(a), nb = parseFloat(b);
+    let cmp;
+    if (sortState.col === 'rank') cmp = parseInt(a) - parseInt(b);
+    else if (!isNaN(na) && !isNaN(nb)) cmp = na - nb;
+    else cmp = String(a || '').localeCompare(String(b || ''));
+    return cmp * sortState.dir;
+  });
+  // 現在の絞り込み・並び順における表示順位(参考値、フィルター対象ではない)
+  rows.forEach((r, i) => { r._viewRank = i + 1; });
+
+  document.getElementById('meta').textContent = data.length
+    ? `${rows.length} 件表示 (全${data.length}件中)`
+    : 'CSVファイルを選択してください';
+
+  // taken: シナジーを貰う側 -> そのシナジーで「DPSを返した」量
+  // given: シナジーを与える側 -> その付与によって「DPSを返された」量
+  const buffLabel = mode === 'taken' ? '受けたシナジー' : '与えたシナジー';
+  const dpsLabel = mode === 'taken' ? '返したDPS' : '返されたDPS';
+  const cols = mode === 'taken'
+    ? [['_viewRank', '表示順位'], ['job', 'ジョブ(ジョブ内順位)'], ['player', 'プレイヤー(地域)'],
+       ['buff_received', buffLabel], ['dps_value', dpsLabel],
+       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成(8人)'], ['report', 'ログ']]
+    : [['_viewRank', '表示順位'], ['job', 'ジョブ(ジョブ内順位)'], ['player', 'プレイヤー(地域)'],
+       ['buff_given', buffLabel], ['dps_value', dpsLabel],
+       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成(8人)'], ['report', 'ログ']];
+
+  const leftCols = new Set(['job', buffCol]);
+  const thead = document.querySelector('#table thead');
+  thead.innerHTML = '<tr>' + cols.map(([k, label]) =>
+    `<th data-col="${k}"${leftCols.has(k) ? ' class="col-left"' : ''}>${label}${sortState.col === k ? (sortState.dir === 1 ? ' ▲' : ' ▼') : ''}</th>`
+  ).join('') + '</tr>';
+  thead.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (col === 'report' || col === 'party_comp_others' || col === '_viewRank') return;
+    sortState.dir = (sortState.col === col) ? -sortState.dir : -1;
+    sortState.col = col;
+    render();
+  }));
+
+  const buffNameKey = mode === 'taken' ? 'buff_received' : 'buff_given';
+  const tbody = document.querySelector('#table tbody');
+  tbody.innerHTML = rows.slice(0, 500).map(r => {
+    const buffName = r[buffNameKey];
+    const icon = BUFF_ICON[buffName] || buffIconUrl(r.buff_icon);
+    return `<tr>
+    <td>${r._viewRank}</td>
+    <td class="col-left"><span class="jobrank-cell">${jobChip(r.job)}<span class="badge">#${r.rank}</span></span></td>
+    <td class="cell-filter" data-filter-type="player" data-filter-value="${escapeAttr(r.player)}">${r.player}${r.region ? ` <span class="badge">${r.region}</span>` : ''}</td>
+    <td class="col-left"><span class="buffchip cell-filter" data-filter-type="buff" data-filter-value="${escapeAttr(buffName)}">${icon ? `<img src="${icon}">` : ''}${buffJp(buffName)}</span></td>
+    <td>${parseFloat(r.dps_value).toFixed(1)}</td>
+    <td>${ownBadge(r.is_own_ranked_log)}</td>
+    <td>${formatDuration(r.duration_sec)}</td>
+    <td>${partyCompFullHtml(r.job, r.party_comp_others)}</td>
+    <td><a href="${reportUrl(r.report_code, r.fight_id)}" target="_blank">開く</a></td>
+  </tr>`;
+  }).join('');
+  tbody.querySelectorAll('[data-filter-type]').forEach(el => el.addEventListener('click', () => {
+    applyTableFilterClick(el.dataset.filterType, el.dataset.filterValue);
+  }));
+}
+
+loadMode('taken');
+</script>
+
+</body>
+</html>

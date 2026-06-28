@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>FFLogs シナジー サマリー</title>
+<link rel="stylesheet" href="viewer_shared.css?v=18">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="viewer.html">ランキング</a>
+  <a href="summary.html" class="active">サマリー</a>
+</nav>
+
+<h1>ジョブ×シナジー サマリー</h1>
+<div class="note" id="page-note"></div>
+
+<div class="tabs">
+  <div class="tab active" data-mode="taken">返したDPS(シナジーを貰った側)</div>
+  <div class="tab" data-mode="given">返されたDPS(シナジーを与えた側)</div>
+</div>
+
+<div class="panel">
+  <div class="layout-2col">
+    <div class="filters-col">
+      <div class="field"><label>零式(1つ選択)</label><div class="dropdown" id="f-tier"></div></div>
+      <div class="field"><label>ボス(1つ選択)</label><div class="dropdown" id="f-boss"></div></div>
+      <div class="field" id="job-field"><label>ジョブ(複数選択可)</label><div class="dropdown" id="f-job"></div></div>
+      <div class="field" id="buff-single-field"><label>シナジー(1つ選択・チャート用)</label><div class="dropdown" id="f-buff-single"></div></div>
+      <div class="field" id="buff-multi-field"><label>シナジー(複数選択可)</label><div class="dropdown" id="f-buff-multi"></div></div>
+      <div class="field"><label>地域(複数選択可)</label><div class="dropdown" id="f-region"></div></div>
+      <div class="field" id="own-field"><label>本人/同席(複数選択可)</label><div class="dropdown" id="f-own"></div></div>
+      <div class="field"><label>取得ランク数(上位何位まで使うか)</label>
+        <input type="number" id="f-rank-max" placeholder="空欄=全件">
+      </div>
+      <div class="field"><label>並び順 / 表示</label>
+        <div class="toggle-pair" id="sort-mode">
+          <button type="button" class="toggle-btn active" data-sort="avg" data-display="avg">平均</button>
+          <button type="button" class="toggle-btn" data-sort="top1" data-display="top1">トップ1</button>
+        </div>
+      </div>
+    </div>
+    <div class="data-col">
+      <div class="meta" id="meta"></div>
+
+      <div id="chart-section">
+        <h2>ジョブ別バーチャート(このボス・このシナジーでのジョブ比較)</h2>
+        <div class="bar-legend" id="bar-legend">
+          <span><span class="legend-swatch legend-avg"></span>平均DPS</span>
+          <span><span class="legend-swatch legend-top1"></span>トップ1(rank=1)DPS</span>
+        </div>
+        <div id="chart" class="chart-wrap"></div>
+      </div>
+
+      <h2 id="matrix-title">ジョブ×シナジー マトリクス</h2>
+      <div class="note" id="matrix-note"></div>
+      <div class="tablewrap"><table id="matrix" class="matrix-table"><thead></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<script src="viewer_shared.js?v=18"></script>
+<script>
+const ddTier = createMultiDropdown('f-tier', { single: true });
+const ddBoss = createMultiDropdown('f-boss', { single: true });
+const ddJob = createMultiDropdown('f-job', { roleGroups: ROLE_GROUPS });
+const ddBuffSingle = createMultiDropdown('f-buff-single', { single: true });
+const ddBuffMulti = createMultiDropdown('f-buff-multi');
+const ddRegion = createMultiDropdown('f-region');
+const ddOwn = createMultiDropdown('f-own');
+fillMultiDropdown(ddTier, TIERS.map(t => t.key), null, k => TIERS.find(t => t.key === k).label);
+fillMultiDropdown(ddOwn, ['True', 'False'], null, v => v === 'True' ? '本人' : '同席');
+ddTier.onChange = () => {
+  const tier = [...ddTier.values][0];
+  const bosses = (TIERS.find(t => t.key === tier)?.bosses || [])
+    .filter(b => data.some(r => r.boss === b));
+  fillMultiDropdown(ddBoss, bosses, bossIcon, bossJp);
+  render();
+};
+[ddBoss, ddJob, ddBuffSingle, ddBuffMulti, ddRegion, ddOwn].forEach(dd => dd.onChange = render);
+
+let sortMetric = 'avg';
+let matrixDisplay = 'avg';
+document.querySelectorAll('#sort-mode .toggle-btn').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#sort-mode .toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  sortMetric = btn.dataset.sort;
+  matrixDisplay = btn.dataset.display;
+  render();
+}));
+
+let mode = 'taken';
+let data = [];
+const dataCache = { taken: null, given: null };
+
+function applyData(rows) {
+  dataCache[mode] = rows;
+  data = rows;
+
+  const taken = mode === 'taken';
+  document.getElementById('job-field').style.display = taken ? '' : 'none';
+  document.getElementById('buff-single-field').style.display = taken ? '' : 'none';
+  document.getElementById('buff-multi-field').style.display = taken ? 'none' : '';
+  document.getElementById('own-field').style.display = taken ? '' : 'none';
+  document.getElementById('chart-section').style.display = taken ? '' : 'none';
+
+  const ranks = data.map(r => parseInt(r.rank)).filter(n => !isNaN(n));
+  const maxRank = ranks.length ? ranks.reduce((a, b) => a > b ? a : b, 0) : null;
+  document.getElementById('f-rank-max').placeholder = maxRank ? `空欄=全件 (最大${maxRank})` : '空欄=全件';
+
+  const tier = [...ddTier.values][0] || TIERS[0].key;
+  if (!ddTier.values.size) { ddTier.values.add(TIERS[0].key); updateDropdownUI(ddTier); }
+  const allBosses = uniqueSorted(data, 'boss').sort((a, b) => BOSS_ORDER.indexOf(a) - BOSS_ORDER.indexOf(b));
+  const tierBosses = allBosses.filter(b => tierOfBoss(b) === tier);
+  const bosses = tierBosses.length ? tierBosses : allBosses;
+  fillMultiDropdown(ddBoss, bosses, bossIcon, bossJp);
+  const jobs = uniqueSorted(data, 'job').sort((a, b) => jobOrderIndex(a) - jobOrderIndex(b));
+  fillMultiDropdown(ddJob, jobs, j => jobMeta(j).icon, j => jobMeta(j).jp);
+  const buffCol = taken ? 'buff_received' : 'buff_given';
+  const buffs = uniqueSorted(data, buffCol).sort((a, b) => buffJobOrderIndex(a) - buffJobOrderIndex(b));
+  fillMultiDropdown(ddBuffSingle, buffs, b => BUFF_ICON[b] || '', buffJp);
+  if (!ddBuffSingle.values.size && buffs.length) { ddBuffSingle.values.add(buffs[0]); updateDropdownUI(ddBuffSingle); }
+  fillMultiDropdown(ddBuffMulti, buffs, b => BUFF_ICON[b] || '', buffJp);
+  fillMultiDropdown(ddRegion, uniqueSorted(data, 'region').filter(Boolean), null, v => v);
+
+  document.getElementById('matrix-title').textContent =
+    taken ? 'ジョブ×シナジー マトリクス(縦軸:受け取ったジョブ、横軸:シナジー)'
+          : '返されたDPS ランキング(このボスでの、シナジー(ジョブ)別)';
+  document.getElementById('matrix-note').textContent =
+    taken ? '列の絞り込みは行われず、選択中のボス・ジョブ・地域などの条件下で存在する全シナジーを表示します。チャート用に選んだシナジーの列は背景色で強調され、その列の値でジョブの行を並び替えます。'
+          : '';
+  document.getElementById('page-note').textContent =
+    taken
+      ? '選択したボス1戦の中で、ジョブ×シナジーの組み合わせごとに平均DPSとトップ1(rank=1)のDPSを表示しています。チャートは「ボスを1つ・シナジーを1つ」選んだ状態でのジョブ比較用です。個々のログを見たい場合はランキングページをご利用ください。'
+      : 'シナジーは付与するジョブが一意に決まるため、ジョブ別の比較ではなく「どのシナジーが全体として一番DPSを返してもらえているか(シナジー自体の強さ比較)」を見る表です。';
+  const mtx = document.querySelector('#matrix');
+  mtx.style.minWidth = '';
+  render();
+  requestAnimationFrame(() => { mtx.style.minWidth = mtx.offsetWidth + 'px'; });
+}
+
+async function loadMode(m) {
+  mode = m;
+  if (dataCache[m]) { applyData(dataCache[m]); return; }
+  document.getElementById('meta').textContent = '読み込み中...';
+  let rows;
+  try {
+    rows = await fetchCsvRows(m);
+  } catch (e) {
+    document.getElementById('meta').textContent = '読み込みに失敗しました。start_viewer.bat でローカルサーバーを起動してください。';
+    return;
+  }
+  applyData(rows);
+}
+
+document.getElementById('f-rank-max').addEventListener('input', render);
+
+document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  loadMode(tab.dataset.mode);
+}));
+
+function applyTableFilterClick(type, value) {
+  if (type === 'boss') setDropdownToSingle(ddBoss, value);
+  else if (type === 'job') setDropdownToSingle(ddJob, value);
+  else if (type === 'buff') setDropdownToSingle(mode === 'taken' ? ddBuffSingle : ddBuffMulti, value);
+  render();
+}
+
+// ジョブ×シナジーごとに(絞り込み後の行の中での)平均DPSとトップ1(rank=1)DPSを求める。
+// トップ1だけだと1件の外れ値に見えてしまうため、平均を主指標としつつトップ1も併記する。
+function aggregate(rows, buffCol) {
+  const map = new Map();
+  rows.forEach(r => {
+    const key = r.job + '|' + r[buffCol];
+    const dps = parseFloat(r.dps_value);
+    if (!map.has(key)) map.set(key, { job: r.job, buff: r[buffCol], values: [], top1: dps, topRow: r });
+    const entry = map.get(key);
+    entry.values.push(dps);
+    if (dps > entry.top1) { entry.top1 = dps; entry.topRow = r; }
+  });
+  map.forEach(entry => {
+    entry.avg = entry.values.reduce((a, b) => a + b, 0) / entry.values.length;
+  });
+  return map;
+}
+function sortByMetric(list) {
+  return list.slice().sort((a, b) => b[sortMetric] - a[sortMetric]);
+}
+
+function render() {
+  if (mode === 'taken') renderTaken();
+  else renderGiven();
+}
+
+function renderTaken() {
+  const rankCutoff = parseFloat(document.getElementById('f-rank-max').value);
+  const rows = data.filter(r =>
+    (!ddBoss.values.size || ddBoss.values.has(r.boss)) &&
+    (!ddJob.values.size || ddJob.values.has(r.job)) &&
+    (!ddRegion.values.size || ddRegion.values.has(r.region)) &&
+    (!ddOwn.values.size || ddOwn.values.has(r.is_own_ranked_log)) &&
+    (isNaN(rankCutoff) || parseInt(r.rank) <= rankCutoff)
+  );
+
+  document.getElementById('meta').textContent = data.length
+    ? `${rows.length} 件のログ行が対象 (全${data.length}件中)`
+    : 'CSVファイルを選択してください';
+
+  // マトリクスは「このボスで存在する全シナジー」を見せるためのものなので、シナジー単一選択フィルターによる行の絞り込みは行わない。
+  // ただし選択中のシナジー列を強調し、その列の値で行(ジョブ)を並び替えることで、チャートとの連動感を出す。
+  const selectedBuff = Array.from(ddBuffSingle.values)[0];
+  const matrixMap = aggregate(rows, 'buff_received');
+  renderTakenMatrix(matrixMap, selectedBuff);
+
+  // チャートは選択中の1シナジーに絞ってジョブを比較する
+  const chartRows = selectedBuff ? rows.filter(r => r.buff_received === selectedBuff) : [];
+  const chartMap = aggregate(chartRows, 'buff_received');
+  renderTakenChart(chartMap, selectedBuff);
+}
+
+function renderGiven() {
+  const buffValues = ddBuffMulti.values;
+  const rankCutoff = parseFloat(document.getElementById('f-rank-max').value);
+  const rows = data.filter(r =>
+    (!ddBoss.values.size || ddBoss.values.has(r.boss)) &&
+    (!ddRegion.values.size || ddRegion.values.has(r.region)) &&
+    (!buffValues.size || buffValues.has(r.buff_given)) &&
+    (isNaN(rankCutoff) || parseInt(r.rank) <= rankCutoff)
+  );
+
+  document.getElementById('meta').textContent = data.length
+    ? `${rows.length} 件のログ行が対象 (全${data.length}件中)`
+    : 'CSVファイルを選択してください';
+
+  const map = aggregate(rows, 'buff_given');
+  renderGivenRanking(map);
+}
+
+function renderTakenChart(map, selectedBuff) {
+  const chart = document.getElementById('chart');
+  const legend = document.getElementById('bar-legend');
+  const list = sortByMetric(Array.from(map.values()));
+  if (!selectedBuff) {
+    legend.style.display = 'none';
+    chart.innerHTML = '<div class="note">上の「シナジー(1つ選択・チャート用)」でシナジーを選んでください。</div>';
+    return;
+  }
+  if (!list.length) {
+    legend.style.display = 'none';
+    chart.innerHTML = '<div class="note">対象データがありません</div>';
+    return;
+  }
+  legend.style.display = 'flex';
+  chart.innerHTML = renderBars(list);
+}
+
+// 平均(主指標)を太いバーで、トップ1(rank=1)までの伸びを薄いバーで重ねて1行にまとめて表示する。
+// 各バーに「平均」「トップ」という文字を繰り返すと見づらいため、説明は凡例(レジェンド)に1回だけ出す。
+function renderBars(list) {
+  const scale = Math.max(...list.map(x => x.top1)) || 1;
+  return list.map(e => {
+    const top1Pct = Math.max(4, e.top1 / scale * 100);
+    const avgPct = Math.max(2, e.avg / scale * 100);
+    const m = jobMeta(e.job);
+    const icon = m.icon ? `<img class="bar-icon" src="${m.icon}" title="${m.jp}">` : m.jp;
+    return `
+    <div class="bar-row">
+      <div class="bar-label">${icon}</div>
+      <div class="bar-track">
+        <div class="bar-fill-top1" style="width:${top1Pct.toFixed(1)}%;background:${jobColor(e.job)}"></div>
+        <div class="bar-fill-avg" style="width:${avgPct.toFixed(1)}%;background:${jobColor(e.job)}"></div>
+      </div>
+      <div class="bar-value">${e.avg.toFixed(0)} <span class="bar-delta">(${e.top1.toFixed(0)})</span></div>
+    </div>`;
+  }).join('');
+}
+
+function renderTakenMatrix(map, selectedBuff) {
+  const entries = Array.from(map.values());
+  let jobs = Array.from(new Set(entries.map(e => e.job)));
+  const buffs = Array.from(new Set(entries.map(e => e.buff))).sort((a, b) => buffJobOrderIndex(a) - buffJobOrderIndex(b));
+  const byKey = new Map(entries.map(e => [e.job + '|' + e.buff, e]));
+
+  // 選択中のシナジー列がある場合は、その列の値(平均/トップ1の現在の並び順指標)でジョブ行を並び替える
+  if (selectedBuff && buffs.includes(selectedBuff)) {
+    jobs.sort((a, b) => {
+      const ea = byKey.get(a + '|' + selectedBuff);
+      const eb = byKey.get(b + '|' + selectedBuff);
+      const va = ea ? ea[sortMetric] : -Infinity;
+      const vb = eb ? eb[sortMetric] : -Infinity;
+      return vb - va;
+    });
+  } else {
+    jobs.sort((a, b) => jobOrderIndex(a) - jobOrderIndex(b));
+  }
+
+  const thead = document.querySelector('#matrix thead');
+  thead.innerHTML = '<tr><th style="width:120px">ジョブ</th>' + buffs.map(b => {
+    const icon = BUFF_ICON[b];
+    const content = icon ? `<img src="${icon}">` : buffJp(b);
+    const activeClass = b === selectedBuff ? ' active-col' : '';
+    return `<th style="width:62px" class="cell-filter${activeClass}" title="${escapeAttr(buffJp(b))}" data-filter-type="buff" data-filter-value="${escapeAttr(b)}">${content}</th>`;
+  }).join('') + '</tr>';
+
+  const tbody = document.querySelector('#matrix tbody');
+  tbody.innerHTML = jobs.map(job => {
+    const cells = buffs.map(buff => {
+      const e = byKey.get(job + '|' + buff);
+      const activeClass = buff === selectedBuff ? ' active-col' : '';
+      if (!e) return `<td class="empty${activeClass}">-</td>`;
+      const val = matrixDisplay === 'both'
+        ? `${e.avg.toFixed(0)} <span class="note">(${e.top1.toFixed(0)})</span>`
+        : matrixDisplay === 'top1' ? e.top1.toFixed(0) : e.avg.toFixed(0);
+      return `<td class="${activeClass.trim()}">${val}</td>`;
+    }).join('');
+    return `<tr><td class="cell-filter" data-filter-type="job" data-filter-value="${escapeAttr(job)}">${jobChip(job)}</td>${cells}</tr>`;
+  }).join('');
+  wireMatrixClicks();
+}
+
+// given側はジョブ×シナジーが1:1で、ボスも単一選択なので、もはや2軸の表は不要。
+// 「このボスで、どのシナジーが一番DPSを返してもらえているか」のシンプルなランキングとして表示する。
+function renderGivenRanking(map) {
+  const entries = sortByMetric(Array.from(map.values()));
+
+  const thead = document.querySelector('#matrix thead');
+  thead.innerHTML = '<tr><th class="rank-cell">順位</th><th>シナジー(ジョブ)</th><th>平均DPS</th><th>トップDPS</th><th>プレイヤー(トップ)</th><th>編成(トップ)</th><th>ログ</th></tr>';
+
+  const tbody = document.querySelector('#matrix tbody');
+  tbody.innerHTML = entries.map((e, i) => {
+    const icon = BUFF_ICON[e.buff];
+    return `<tr>
+    <td class="rank-cell">${i + 1}</td>
+    <td class="buff-job-cell"><span class="buff-job-wrap cell-filter" data-filter-type="buff" data-filter-value="${escapeAttr(e.buff)}">${icon ? `<img src="${icon}">` : ''}<span>${buffJp(e.buff)}</span><span class="bar-buffname">(${jobMeta(e.job).jp})</span></span></td>
+    <td>${e.avg.toFixed(0)}</td>
+    <td>${e.top1.toFixed(0)}</td>
+    <td>${e.topRow.player}</td>
+    <td class="comp-cell">${partyCompFullHtml(e.topRow.job, e.topRow.party_comp_others)}</td>
+    <td><a href="${reportUrl(e.topRow.report_code, e.topRow.fight_id)}" target="_blank">開く</a></td>
+  </tr>`;
+  }).join('');
+  wireMatrixClicks();
+}
+
+function wireMatrixClicks() {
+  document.querySelectorAll('#matrix [data-filter-type]').forEach(el => el.addEventListener('click', () => {
+    applyTableFilterClick(el.dataset.filterType, el.dataset.filterValue);
+  }));
+}
+
+loadMode('taken');
+</script>
+
+</body>
+</html>

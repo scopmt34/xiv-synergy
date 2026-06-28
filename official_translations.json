@@ -1,0 +1,194 @@
+{
+  "jobs": {
+    "Astrologian": {
+      "ja": "占星術師",
+      "abbr": "AST",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026041.tex&format=png"
+    },
+    "Bard": {
+      "ja": "吟遊詩人",
+      "abbr": "BRD",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026007.tex&format=png"
+    },
+    "BlackMage": {
+      "ja": "黒魔道士",
+      "abbr": "BLM",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026009.tex&format=png"
+    },
+    "DarkKnight": {
+      "ja": "暗黒騎士",
+      "abbr": "DRK",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026040.tex&format=png"
+    },
+    "Dragoon": {
+      "ja": "竜騎士",
+      "abbr": "DRG",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026006.tex&format=png"
+    },
+    "Machinist": {
+      "ja": "機工士",
+      "abbr": "MCH",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026042.tex&format=png"
+    },
+    "Monk": {
+      "ja": "モンク",
+      "abbr": "MNK",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026004.tex&format=png"
+    },
+    "Ninja": {
+      "ja": "忍者",
+      "abbr": "NIN",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026037.tex&format=png"
+    },
+    "Paladin": {
+      "ja": "ナイト",
+      "abbr": "PLD",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026003.tex&format=png"
+    },
+    "Scholar": {
+      "ja": "学者",
+      "abbr": "SCH",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026011.tex&format=png"
+    },
+    "Summoner": {
+      "ja": "召喚士",
+      "abbr": "SMN",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026010.tex&format=png"
+    },
+    "Warrior": {
+      "ja": "戦士",
+      "abbr": "WAR",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026005.tex&format=png"
+    },
+    "WhiteMage": {
+      "ja": "白魔道士",
+      "abbr": "WHM",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026008.tex&format=png"
+    },
+    "RedMage": {
+      "ja": "赤魔道士",
+      "abbr": "RDM",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026056.tex&format=png"
+    },
+    "Samurai": {
+      "ja": "侍",
+      "abbr": "SAM",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026055.tex&format=png"
+    },
+    "Dancer": {
+      "ja": "踊り子",
+      "abbr": "DNC",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026062.tex&format=png"
+    },
+    "Gunbreaker": {
+      "ja": "ガンブレイカー",
+      "abbr": "GNB",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026061.tex&format=png"
+    },
+    "Reaper": {
+      "ja": "リーパー",
+      "abbr": "RPR",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026063.tex&format=png"
+    },
+    "Sage": {
+      "ja": "賢者",
+      "abbr": "SGE",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026064.tex&format=png"
+    },
+    "Viper": {
+      "ja": "ヴァイパー",
+      "abbr": "VPR",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026068.tex&format=png"
+    },
+    "Pictomancer": {
+      "ja": "ピクトマンサー",
+      "abbr": "PCT",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/026000/026069.tex&format=png"
+    }
+  },
+  "buffs": {
+    "Divination": {
+      "ja": "ディヴィネーション",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/213000/213245.tex&format=png"
+    },
+    "Chain Stratagem": {
+      "ja": "連環計",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212809.tex&format=png"
+    },
+    "Radiant Finale": {
+      "ja": "光神のフィナーレ",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212624.tex&format=png"
+    },
+    "Starry Muse": {
+      "ja": "イマジンスカイ",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/213000/213808.tex&format=png"
+    },
+    "Battle Voice": {
+      "ja": "バトルボイス",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212601.tex&format=png"
+    },
+    "The Wanderer's Minuet": {
+      "ja": "旅神のメヌエット",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212610.tex&format=png"
+    },
+    "Mage's Ballad": {
+      "ja": "賢人のバラード",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212603.tex&format=png"
+    },
+    "Army's Paeon": {
+      "ja": "軍神のパイオン",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212605.tex&format=png"
+    },
+    "The Spear": {
+      "ja": "ハルオーネの槍",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/213000/213207.tex&format=png"
+    },
+    "The Balance": {
+      "ja": "アーゼマの均衡",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/213000/213204.tex&format=png"
+    },
+    "Battle Litany": {
+      "ja": "バトルリタニー",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212578.tex&format=png"
+    },
+    "Dokumori": {
+      "ja": "毒盛の術",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212920.tex&format=png"
+    },
+    "Searing Light": {
+      "ja": "シアリングライト",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212699.tex&format=png"
+    },
+    "Technical Finish": {
+      "ja": "テクニカルフィニッシュ",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/213000/213709.tex&format=png"
+    },
+    "Devilment": {
+      "ja": "攻めのタンゴ",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/213000/213714.tex&format=png"
+    },
+    "Standard Finish": {
+      "ja": "スタンダードフィニッシュ",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/213000/213708.tex&format=png"
+    },
+    "Brotherhood": {
+      "ja": "桃園結義：攻撃",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212532.tex&format=png"
+    },
+    "Arcane Circle": {
+      "ja": "アルケインサークル",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/212000/212936.tex&format=png"
+    },
+    "Embolden": {
+      "ja": "エンボルデン",
+      "icon": "https://v2.xivapi.com/api/asset?path=ui/icon/213000/213410.tex&format=png"
+    }
+  },
+  "bosses": {
+    "Vamp_Fatale": "ヴァンプ・ファタール",
+    "Red_Hot_and_Deep_Blue": "レッドホット&ディープブルー",
+    "The_Tyrant": "ザ・タイラント",
+    "Lindwurm": "リンドブルム",
+    "Lindwurm_II": "リンドブルム"
+  }
+}
