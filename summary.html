@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FFLogs シナジー サマリー</title>
-<link rel="stylesheet" href="viewer_shared.css?v=30">
+<link rel="stylesheet" href="viewer_shared.css?v=31">
 </head>
 <body>
 
@@ -30,7 +30,7 @@
       <div class="field"><label>地域</label><div class="dropdown" id="f-region"></div></div>
       <div class="field" id="own-field"><label>本人/同席</label><div class="dropdown" id="f-own"></div></div>
       <div class="field"><label>取得ランク数</label>
-        <input type="number" id="f-rank-max" placeholder="空欄=全件">
+        <input type="number" id="f-rank-max" min="1" max="100" placeholder="空欄=全件 (1〜100)">
       </div>
       <div class="field"><label id="sort-mode-label">並び順 / 表示</label>
         <div class="toggle-pair" id="sort-mode">
@@ -58,7 +58,7 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=30"></script>
+<script src="viewer_shared.js?v=31"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
@@ -191,7 +191,8 @@ function render() {
 }
 
 function renderTaken() {
-  const rankCutoff = parseFloat(document.getElementById('f-rank-max').value);
+  const rankRaw = parseInt(document.getElementById('f-rank-max').value);
+  const rankCutoff = isNaN(rankRaw) ? NaN : Math.max(1, Math.min(100, rankRaw));
   const rows = data.filter(r =>
     (!ddBoss.values.size || ddBoss.values.has(r.boss)) &&
     (!ddJob.values.size || ddJob.values.has(r.job)) &&
@@ -218,7 +219,8 @@ function renderTaken() {
 
 function renderGiven() {
   const buffValues = ddBuffMulti.values;
-  const rankCutoff = parseFloat(document.getElementById('f-rank-max').value);
+  const rankRaw = parseInt(document.getElementById('f-rank-max').value);
+  const rankCutoff = isNaN(rankRaw) ? NaN : Math.max(1, Math.min(100, rankRaw));
   const rows = data.filter(r =>
     (!ddBoss.values.size || ddBoss.values.has(r.boss)) &&
     (!ddRegion.values.size || ddRegion.values.has(r.region)) &&

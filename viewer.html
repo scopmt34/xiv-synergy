@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FFLogs シナジー ランキングビューア</title>
-<link rel="stylesheet" href="viewer_shared.css?v=29">
+<link rel="stylesheet" href="viewer_shared.css?v=31">
 </head>
 <body>
 
@@ -29,11 +29,17 @@
       <div class="field"><label>本人/同席</label><div class="dropdown" id="f-own"></div></div>
       <div class="field"><label>プレイヤー検索</label><input type="text" id="f-search" placeholder="名前で検索"></div>
       <div class="field"><label>ジョブ内順位</label>
-        <input type="number" id="f-rank-max" placeholder="例: 10">
+        <input type="number" id="f-rank-max" min="1" max="100" placeholder="例: 10 (1〜100)">
       </div>
       <div class="field"><label>討伐時間</label>
         <div class="range-pair">
-          <input type="number" id="f-dur-min" placeholder="以上"><span>〜</span><input type="number" id="f-dur-max" placeholder="以下">
+          <input type="number" class="dur-part" id="f-dur-min-m" min="0" placeholder="分">
+          <span>:</span>
+          <input type="number" class="dur-part" id="f-dur-min-s" min="0" max="59" placeholder="秒">
+          <span>〜</span>
+          <input type="number" class="dur-part" id="f-dur-max-m" min="0" placeholder="分">
+          <span>:</span>
+          <input type="number" class="dur-part" id="f-dur-max-s" min="0" max="59" placeholder="秒">
         </div>
       </div>
       <div class="field"><label>編成に含むジョブ</label><div class="dropdown" id="f-comp"></div></div>
@@ -45,7 +51,7 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=29"></script>
+<script src="viewer_shared.js?v=31"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
@@ -120,8 +126,15 @@ async function loadMode(m) {
   applyData(rows);
 }
 
-['f-search', 'f-rank-max', 'f-dur-min', 'f-dur-max'].forEach(id =>
+['f-search', 'f-rank-max', 'f-dur-min-m', 'f-dur-min-s', 'f-dur-max-m', 'f-dur-max-s'].forEach(id =>
   document.getElementById(id).addEventListener('input', render));
+
+function getDurSec(mId, sId) {
+  const m = parseInt(document.getElementById(mId).value);
+  const s = parseInt(document.getElementById(sId).value);
+  if (isNaN(m) && isNaN(s)) return NaN;
+  return (isNaN(m) ? 0 : m) * 60 + (isNaN(s) ? 0 : s);
+}
 
 document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -160,9 +173,10 @@ function applyTableFilterClick(type, value) {
 function render() {
   const buffCol = mode === 'taken' ? 'buff_received' : 'buff_given';
   const search = document.getElementById('f-search').value.toLowerCase();
-  const rankMax = parseFloat(document.getElementById('f-rank-max').value);
-  const durMin = parseFloat(document.getElementById('f-dur-min').value);
-  const durMax = parseFloat(document.getElementById('f-dur-max').value);
+  const rankRaw = parseInt(document.getElementById('f-rank-max').value);
+  const rankMax = isNaN(rankRaw) ? NaN : Math.max(1, Math.min(100, rankRaw));
+  const durMin = getDurSec('f-dur-min-m', 'f-dur-min-s');
+  const durMax = getDurSec('f-dur-max-m', 'f-dur-max-s');
 
   let rows = data.filter(r => {
     if (ddBoss.values.size && !ddBoss.values.has(r.boss)) return false;
