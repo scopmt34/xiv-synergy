@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FFLogs シナジー ランキングビューア</title>
-<link rel="stylesheet" href="viewer_shared.css?v=27">
+<link rel="stylesheet" href="viewer_shared.css?v=28">
 </head>
 <body>
 
@@ -45,7 +45,7 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=27"></script>
+<script src="viewer_shared.js?v=28"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
@@ -70,7 +70,6 @@ ddTier.onChange = () => {
 
 let mode = 'taken';
 let data = [];
-let sortState = { col: 'dps_value', dir: -1 };
 const dataCache = { taken: null, given: null };
 
 function applyData(rows) {
@@ -187,15 +186,7 @@ function render() {
     return true;
   });
 
-  rows.sort((x, y) => {
-    const a = x[sortState.col], b = y[sortState.col];
-    const na = parseFloat(a), nb = parseFloat(b);
-    let cmp;
-    if (sortState.col === 'rank') cmp = parseInt(a) - parseInt(b);
-    else if (!isNaN(na) && !isNaN(nb)) cmp = na - nb;
-    else cmp = String(a || '').localeCompare(String(b || ''));
-    return cmp * sortState.dir;
-  });
+  rows.sort((x, y) => parseInt(x.rank) - parseInt(y.rank));
   // 現在の絞り込み・並び順における表示順位(参考値、フィルター対象ではない)
   rows.forEach((r, i) => { r._viewRank = i + 1; });
 
@@ -218,15 +209,8 @@ function render() {
   const leftCols = new Set(['job', buffCol]);
   const thead = document.querySelector('#table thead');
   thead.innerHTML = '<tr>' + cols.map(([k, label]) =>
-    `<th data-col="${k}"${leftCols.has(k) ? ' class="col-left"' : ''}>${label}${sortState.col === k ? (sortState.dir === 1 ? ' ▲' : ' ▼') : ''}</th>`
+    `<th${leftCols.has(k) ? ' class="col-left"' : ''}>${label}</th>`
   ).join('') + '</tr>';
-  thead.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
-    const col = th.dataset.col;
-    if (col === 'report' || col === 'party_comp_others' || col === '_viewRank') return;
-    sortState.dir = (sortState.col === col) ? -sortState.dir : -1;
-    sortState.col = col;
-    render();
-  }));
 
   const buffNameKey = mode === 'taken' ? 'buff_received' : 'buff_given';
   const tbody = document.querySelector('#table tbody');

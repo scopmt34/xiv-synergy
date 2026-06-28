@@ -210,6 +210,7 @@ a:hover { text-decoration: underline; }
 .matrix-table th.active-col, .matrix-table td.active-col { background: #2a3a55; }
 .jobrank-cell { display: inline-flex; align-items: center; gap: 6px; }
 #table th, #table td { text-align: center; }
+#table th { cursor: default; }
 #table th.col-left, #table td.col-left { text-align: left; }
 .buff-job-wrap {
   display: inline-flex; align-items: center; gap: 6px;
