@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>シナジー ランキング</title>
-<link rel="stylesheet" href="viewer_shared.css?v=37">
+<link rel="stylesheet" href="viewer_shared.css?v=38">
 <style>
 .trend-section { margin-bottom: 32px; }
 .trend-table { border-collapse: collapse; font-size: 13px; }
@@ -18,6 +18,8 @@
 .trend-delta.dn { color: #ff6b6b; }
 .trend-delta.flat { color: var(--muted); }
 .trend-empty { color: var(--muted); text-align: center; }
+.trend-label img { width: 18px; height: 18px; border-radius: 4px; vertical-align: middle; margin-right: 3px; }
+.trend-label .sep { color: var(--muted); margin: 0 4px; }
 </style>
 </head>
 <body>
@@ -33,7 +35,7 @@
   <div id="sections"></div>
 </div>
 
-<script src="viewer_shared.js?v=37"></script>
+<script src="viewer_shared.js?v=38"></script>
 <script>
 const PATCHES = [
   { key: 'light_heavyweight', label: 'LH 7.05' },
@@ -41,16 +43,17 @@ const PATCHES = [
   { key: 'heavyweight',       label: 'ヘビー 7.4' },
 ];
 
-function groupAvg(rows, tierKey, entityKey, valKey) {
+// 各ボスのrank=1（最大値）を tier×e1×e2 でグループ化して平均する
+function groupAvgOfMax(rows, e1Key, e2Key) {
   const map = new Map();
   for (const r of rows) {
-    const k = r[tierKey] + '|' + r[entityKey];
-    if (!map.has(k)) map.set(k, { tier: r[tierKey], entity: r[entityKey], sum: 0, n: 0 });
+    const k = `${r.tier}|${r[e1Key]}|${r[e2Key]}`;
+    if (!map.has(k)) map.set(k, { tier: r.tier, e1: r[e1Key], e2: r[e2Key], sum: 0, n: 0 });
     const e = map.get(k);
-    e.sum += parseFloat(r[valKey]);
+    e.sum += parseFloat(r.dps_value);
     e.n++;
   }
-  return Array.from(map.values()).map(e => ({ tier: e.tier, entity: e.entity, avg: e.sum / e.n }));
+  return Array.from(map.values()).map(e => ({ tier: e.tier, e1: e.e1, e2: e.e2, avg: e.sum / e.n }));
 }
 
 function normByTier(entries) {
@@ -61,28 +64,30 @@ function normByTier(entries) {
   return entries.map(e => ({ ...e, norm: maxes[e.tier] ? e.avg / maxes[e.tier] * 100 : 0 }));
 }
 
-function renderTable(entries, iconFn, labelFn) {
+function img(src) {
+  return src ? `<img src="${src}">` : '';
+}
+
+function renderTable(entries, icon1Fn, label1Fn, icon2Fn, label2Fn) {
   const sortPatch = PATCHES[PATCHES.length - 1].key;
-  // entity -> { tier -> norm }
+
   const byEntity = new Map();
   for (const e of entries) {
-    if (!byEntity.has(e.entity)) byEntity.set(e.entity, {});
-    byEntity.get(e.entity)[e.tier] = e.norm;
+    const k = e.e1 + '|' + e.e2;
+    if (!byEntity.has(k)) byEntity.set(k, { e1: e.e1, e2: e.e2, pv: {} });
+    byEntity.get(k).pv[e.tier] = e.norm;
   }
-  const rows = Array.from(byEntity.entries())
-    .sort((a, b) => (b[1][sortPatch] || 0) - (a[1][sortPatch] || 0));
+
+  const rows = Array.from(byEntity.values())
+    .sort((a, b) => (b.pv[sortPatch] || 0) - (a.pv[sortPatch] || 0));
 
   const thead = `<tr>
-    <th class="col-left" style="min-width:160px"></th>
+    <th class="col-left" style="min-width:220px"></th>
     ${PATCHES.map(p => `<th>${p.label}</th>`).join('')}
   </tr>`;
 
-  const tbody = rows.map(([k, pv]) => {
-    const icon = iconFn(k);
-    const label = labelFn(k);
-    const iconHtml = icon
-      ? `<img src="${icon}" style="width:18px;height:18px;border-radius:4px;vertical-align:middle;margin-right:5px;">`
-      : '';
+  const tbody = rows.map(({ e1, e2, pv }) => {
+    const labelHtml = `<span class="trend-label">${img(icon1Fn(e1))}${label1Fn(e1)}<span class="sep">·</span>${img(icon2Fn(e2))}${label2Fn(e2)}</span>`;
     const cells = PATCHES.map((p, i) => {
       const v = pv[p.key];
       if (v === undefined) return '<td class="trend-empty">-</td>';
@@ -96,7 +101,7 @@ function renderTable(entries, iconFn, labelFn) {
         <span class="trend-val">${v.toFixed(0)}%</span>${dHtml}
       </td>`;
     }).join('');
-    return `<tr><td class="col-left">${iconHtml}${label}</td>${cells}</tr>`;
+    return `<tr><td class="col-left">${labelHtml}</td>${cells}</tr>`;
   }).join('');
 
   return `<div class="tablewrap"><table class="trend-table"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
@@ -111,24 +116,29 @@ async function main() {
     document.getElementById('meta').textContent = '読み込みに失敗しました。';
     return;
   }
-  // 本人ランクのログのみ使用
-  given = given.filter(r => r.is_own_ranked_log === 'True');
-  taken = taken.filter(r => r.is_own_ranked_log === 'True');
 
-  const givenNorm = normByTier(groupAvg(given, 'tier', 'job', 'dps_value'));
-  const takenNorm = normByTier(groupAvg(taken, 'tier', 'buff_received', 'dps_value'));
+  // 本人ランクのログ かつ 各ボス×ジョブ×バフ内のトップ(rank=1)のみ使用
+  const givenMax = given.filter(r => r.is_own_ranked_log === 'True' && r.rank === '1');
+  const takenMax = taken.filter(r => r.is_own_ranked_log === 'True' && r.rank === '1');
+
+  const givenNorm = normByTier(groupAvgOfMax(givenMax, 'job', 'buff_given'));
+  const takenNorm = normByTier(groupAvgOfMax(takenMax, 'job', 'buff_received'));
 
   document.getElementById('meta').textContent = '';
   document.getElementById('sections').innerHTML = `
     <div class="trend-section">
-      <h2>与シナジー トレンド（ジョブ別）</h2>
-      <p class="note">各パッチ内の最大を100%として正規化。ジョブが与えた全シナジーバフの合計平均DPS。ヘビー級順。</p>
-      ${renderTable(givenNorm, j => jobMeta(j).icon, j => jobMeta(j).jp)}
+      <h2>与シナジー トレンド（ジョブ × シナジー別）</h2>
+      <p class="note">各ボスのトップDPS(rank=1)をパッチ内のボス間で平均し、パッチ内最大を100%として正規化。ヘビー級順。</p>
+      ${renderTable(givenNorm,
+        j => jobMeta(j).icon, j => jobMeta(j).jp,
+        b => BUFF_ICON[b] || '', b => buffJp(b))}
     </div>
     <div class="trend-section">
-      <h2>被シナジー トレンド（バフ別）</h2>
-      <p class="note">各パッチ内の最大を100%として正規化。そのバフを受けた全プレイヤーの平均DPS。ヘビー級順。</p>
-      ${renderTable(takenNorm, b => BUFF_ICON[b] || '', b => buffJp(b))}
+      <h2>被シナジー トレンド（受けジョブ × バフ別）</h2>
+      <p class="note">各ボスのトップDPS(rank=1)をパッチ内のボス間で平均し、パッチ内最大を100%として正規化。ヘビー級順。</p>
+      ${renderTable(takenNorm,
+        j => jobMeta(j).icon, j => jobMeta(j).jp,
+        b => BUFF_ICON[b] || '', b => buffJp(b))}
     </div>
   `;
 }
