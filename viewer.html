@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FFLogs シナジー ランキングビューア</title>
-<link rel="stylesheet" href="viewer_shared.css?v=28">
+<link rel="stylesheet" href="viewer_shared.css?v=29">
 </head>
 <body>
 
@@ -45,7 +45,7 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=28"></script>
+<script src="viewer_shared.js?v=29"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
@@ -186,7 +186,7 @@ function render() {
     return true;
   });
 
-  rows.sort((x, y) => parseInt(x.rank) - parseInt(y.rank));
+  rows.sort((x, y) => parseFloat(y.dps_value) - parseFloat(x.dps_value));
   // 現在の絞り込み・並び順における表示順位(参考値、フィルター対象ではない)
   rows.forEach((r, i) => { r._viewRank = i + 1; });
 
@@ -199,12 +199,12 @@ function render() {
   const buffLabel = mode === 'taken' ? '被シナジー' : '与シナジー';
   const dpsLabel = 'DPS';
   const cols = mode === 'taken'
-    ? [['_viewRank', '表示順位'], ['job', 'ジョブ(ジョブ内順位)'], ['player', 'プレイヤー(地域)'],
+    ? [['_viewRank', '表示順位'], ['job', 'ジョブ'], ['player', 'プレイヤー'],
        ['buff_received', buffLabel], ['dps_value', dpsLabel],
-       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成(8人)'], ['report', 'リンク']]
-    : [['_viewRank', '表示順位'], ['job', 'ジョブ(ジョブ内順位)'], ['player', 'プレイヤー(地域)'],
+       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成'], ['report', 'リンク']]
+    : [['_viewRank', '表示順位'], ['job', 'ジョブ'], ['player', 'プレイヤー'],
        ['buff_given', buffLabel], ['dps_value', dpsLabel],
-       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成(8人)'], ['report', 'リンク']];
+       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成'], ['report', 'リンク']];
 
   const leftCols = new Set(['job', buffCol]);
   const thead = document.querySelector('#table thead');

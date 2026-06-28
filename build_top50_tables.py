@@ -33,7 +33,7 @@ TIER_BOSSES = [
     ]),
 ]
 
-TOP_N = 50
+TOP_N = 100
 
 
 def load_boss(boss_id, name, direction, tier_key):
@@ -49,7 +49,7 @@ def load_boss(boss_id, name, direction, tier_key):
 
 
 def build(direction, buff_col):
-    out_path = os.path.join(OUTPUT_DIR, f"ALL_top50_{direction}_by_job_and_synergy.csv")
+    out_path = os.path.join(OUTPUT_DIR, f"ALL_top100_{direction}_by_job_and_synergy.csv")
     with open(out_path, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f)
         w.writerow(["tier", "boss_id", "boss", "job", buff_col, "buff_icon", "rank", "player",

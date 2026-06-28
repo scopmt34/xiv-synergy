@@ -277,7 +277,7 @@ function uniqueSorted(rows, key) {
   return Array.from(new Set(rows.map(r => r[key]))).sort();
 }
 function csvPath(m) {
-  return `output/ALL_top50_${m}_by_job_and_synergy.csv`;
+  return `output/ALL_top100_${m}_by_job_and_synergy.csv`;
 }
 // "Medicated"(薬品効果)は食事/薬の被ダメ補正であり、ジョブ間シナジーではないため除外。
 // 同様に付与元ジョブが特定できない"Unknown"の行も除外する。
