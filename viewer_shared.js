@@ -433,7 +433,14 @@ function updateDropdownUI(dd) {
   } else if (n === 1) {
     const v = Array.from(dd.values)[0];
     const it = dd.items.find(x => x.value === v);
-    cur.innerHTML = it && it.icon ? `<img src="${it.icon}">${it.label}` : (it ? it.label : v);
+    if (it && it.icon) {
+      const count = dd.withCounts ? (dd.counts.get(v) || 1) : 1;
+      cur.innerHTML = count > 1
+        ? Array(count).fill(`<img src="${it.icon}" title="${escapeAttr(it.label)}">`).join('')
+        : `<img src="${it.icon}">${it.label}`;
+    } else {
+      cur.innerHTML = it ? it.label : v;
+    }
   } else {
     const sel = dd.items.filter(it => dd.values.has(it.value));
     if (sel.some(it => it.icon)) {
