@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FFLogs シナジー ランキングビューア</title>
-<link rel="stylesheet" href="viewer_shared.css?v=18">
+<link rel="stylesheet" href="viewer_shared.css?v=19">
 </head>
 <body>
 
@@ -45,7 +45,7 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=18"></script>
+<script src="viewer_shared.js?v=19"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
@@ -130,7 +130,9 @@ function applyTableFilterClick(type, value) {
   else if (type === 'buff') setDropdownToSingle(ddBuff, value);
   else if (type === 'player') document.getElementById('f-search').value = value;
   else if (type === 'comp') {
-    if (!ddComp.counts.has(value)) { ddComp.counts.set(value, 1); ddComp.values.add(value); updateDropdownUI(ddComp); }
+    if (ddComp.counts.has(value)) { ddComp.counts.delete(value); ddComp.values.delete(value); }
+    else { ddComp.counts.set(value, 1); ddComp.values.add(value); }
+    updateDropdownUI(ddComp);
   }
   render();
 }
@@ -218,7 +220,7 @@ function render() {
     <td>${parseFloat(r.dps_value).toFixed(1)}</td>
     <td>${ownBadge(r.is_own_ranked_log)}</td>
     <td>${formatDuration(r.duration_sec)}</td>
-    <td>${partyCompFullHtml(r.job, r.party_comp_others)}</td>
+    <td>${partyCompFullHtml(r.job, r.party_comp_others, new Set(ddComp.counts.keys()), ddJob.values)}</td>
     <td><a href="${reportUrl(r.report_code, r.fight_id)}" target="_blank">ログ</a></td>
   </tr>`;
   }).join('');

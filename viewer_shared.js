@@ -180,25 +180,34 @@ function bossIcon(name) {
 function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-function jobChip(job, mini, self, filterType = 'job') {
+function jobChip(job, mini, self, filterType = 'job', extraClass = '') {
   const m = jobMeta(job);
   const color = self ? '#ffd24a' : jobColor(job);
   const icon = m.icon
     ? `<img class="jobicon${mini ? ' mini' : ''}${self ? ' self' : ''}" src="${m.icon}" title="${m.jp}${self ? '(本人)' : ''}">`
     : `<span class="jobdot${mini ? ' mini' : ''}" style="background:#666">${m.abbr.slice(0,2)}</span>`;
   const label = mini ? '' : `<span style="color:${color}">${m.jp}</span>`;
-  return `<span class="jobchip cell-filter${self ? ' self' : ''}" data-filter-type="${filterType}" data-filter-value="${escapeAttr(job)}">${icon}${label}</span>`;
+  const ec = extraClass ? ' ' + extraClass : '';
+  return `<span class="jobchip cell-filter${self ? ' self' : ''}${ec}" data-filter-type="${filterType}" data-filter-value="${escapeAttr(job)}">${icon}${label}</span>`;
 }
 function formatDuration(sec) {
   sec = Math.round(parseFloat(sec) || 0);
   const m = Math.floor(sec / 60), s = sec % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
-function partyCompFullHtml(selfJob, othersCsv) {
+function partyCompFullHtml(selfJob, othersCsv, compSet, jobSet) {
   const others = othersCsv ? othersCsv.split(',').filter(j => JOB_ORDER.includes(j)) : [];
   const list = others.map(j => ({ job: j, self: false })).concat([{ job: selfJob, self: true }]);
   list.sort((a, b) => jobOrderIndex(a.job) - jobOrderIndex(b.job));
-  return `<span class="partycomp">${list.map(it => jobChip(it.job, true, it.self, 'comp')).join('')}</span>`;
+  const compSeen = new Set();
+  return `<span class="partycomp">${list.map(it => {
+    let extraClass = '';
+    if (compSet && compSet.has(it.job) && !compSeen.has(it.job)) {
+      compSeen.add(it.job);
+      extraClass = (jobSet && jobSet.has(it.job)) ? 'job-comp-filtered' : 'comp-filtered';
+    }
+    return jobChip(it.job, true, it.self, 'comp', extraClass);
+  }).join('')}</span>`;
 }
 function buffIconUrl(icon) {
   return icon ? `https://assets.rpglogs.com/img/ff/abilities/${icon}` : '';

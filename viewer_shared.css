@@ -131,6 +131,10 @@ a:hover { text-decoration: underline; }
 .tablewrap { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
 .cell-filter { cursor: pointer; }
 .cell-filter:hover { text-decoration: underline; }
+/* 編成フィルター中のジョブアイコン強調(左端のみ)。.self アイコンはゴールド枠が優先されるため除外 */
+.comp-filtered .jobicon:not(.self), .comp-filtered .jobdot { outline: 2px solid rgba(91, 157, 255, 0.65); outline-offset: 2px; border-radius: 4px; }
+/* ジョブフィルターと編成フィルターが重なる場合はジョブフィルターを優先(ゴールド) */
+.job-comp-filtered .jobicon:not(.self), .job-comp-filtered .jobdot { outline: 2px solid rgba(255, 210, 74, 0.75); outline-offset: 2px; border-radius: 4px; }
 
 .dropdown { position: relative; min-width: 140px; }
 .dd-btn {
