@@ -9,15 +9,15 @@
 
 <nav class="nav">
   <a href="viewer.html">ランキング</a>
-  <a href="summary.html" class="active">サマリー</a>
+  <a href="summary.html" class="active">統計</a>
 </nav>
 
-<h1>ジョブ×シナジー サマリー</h1>
+<h1>ジョブ×シナジー 統計</h1>
 <div class="note" id="page-note"></div>
 
 <div class="tabs">
-  <div class="tab active" data-mode="taken">返したDPS(シナジーを貰った側)</div>
-  <div class="tab" data-mode="given">返されたDPS(シナジーを与えた側)</div>
+  <div class="tab active" data-mode="taken">Taken (被シナジー)</div>
+  <div class="tab" data-mode="given">Given (与シナジー)</div>
 </div>
 
 <div class="panel">
@@ -125,14 +125,11 @@ function applyData(rows) {
 
   document.getElementById('matrix-title').textContent =
     taken ? 'ジョブ×シナジー マトリクス(縦軸:受け取ったジョブ、横軸:シナジー)'
-          : '返されたDPS ランキング(このボスでの、シナジー(ジョブ)別)';
+          : '与シナジー ランキング(このボスでの、シナジー(ジョブ)別)';
   document.getElementById('matrix-note').textContent =
     taken ? '列の絞り込みは行われず、選択中のボス・ジョブ・地域などの条件下で存在する全シナジーを表示します。チャート用に選んだシナジーの列は背景色で強調され、その列の値でジョブの行を並び替えます。'
           : '';
-  document.getElementById('page-note').textContent =
-    taken
-      ? '選択したボス1戦の中で、ジョブ×シナジーの組み合わせごとに平均DPSとトップ1(rank=1)のDPSを表示しています。チャートは「ボスを1つ・シナジーを1つ」選んだ状態でのジョブ比較用です。個々のログを見たい場合はランキングページをご利用ください。'
-      : 'シナジーは付与するジョブが一意に決まるため、ジョブ別の比較ではなく「どのシナジーが全体として一番DPSを返してもらえているか(シナジー自体の強さ比較)」を見る表です。';
+  document.getElementById('page-note').textContent = '';
   const mtx = document.querySelector('#matrix');
   mtx.style.minWidth = '';
   render();
@@ -326,7 +323,7 @@ function renderGivenRanking(map) {
   const entries = sortByMetric(Array.from(map.values()));
 
   const thead = document.querySelector('#matrix thead');
-  thead.innerHTML = '<tr><th class="rank-cell">順位</th><th>シナジー(ジョブ)</th><th>平均DPS</th><th>トップDPS</th><th>プレイヤー(トップ)</th><th>編成(トップ)</th><th>ログ</th></tr>';
+  thead.innerHTML = '<tr><th class="rank-cell">順位</th><th>シナジー(ジョブ)</th><th>平均DPS</th><th>トップDPS</th><th>プレイヤー(トップ)</th><th>編成(トップ)</th><th>リンク</th></tr>';
 
   const tbody = document.querySelector('#matrix tbody');
   tbody.innerHTML = entries.map((e, i) => {
@@ -338,7 +335,7 @@ function renderGivenRanking(map) {
     <td>${e.top1.toFixed(0)}</td>
     <td>${e.topRow.player}</td>
     <td class="comp-cell">${partyCompFullHtml(e.topRow.job, e.topRow.party_comp_others)}</td>
-    <td><a href="${reportUrl(e.topRow.report_code, e.topRow.fight_id)}" target="_blank">開く</a></td>
+    <td><a href="${reportUrl(e.topRow.report_code, e.topRow.fight_id)}" target="_blank">ログ</a></td>
   </tr>`;
   }).join('');
   wireMatrixClicks();

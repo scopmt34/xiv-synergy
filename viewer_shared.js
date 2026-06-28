@@ -205,7 +205,7 @@ function buffIconUrl(icon) {
 }
 function reportUrl(code, fightId) {
   if (!code) return '';
-  return `https://www.fflogs.com/reports/${code}?fight=${fightId}&translate=true`;
+  return `https://ja.fflogs.com/reports/${code}?fight=${fightId}&translate=true`;
 }
 function ownBadge(v) {
   if (v === 'True') return '<span class="badge own">本人</span>';

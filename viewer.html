@@ -9,14 +9,14 @@
 
 <nav class="nav">
   <a href="viewer.html" class="active">ランキング</a>
-  <a href="summary.html">サマリー</a>
+  <a href="summary.html">統計</a>
 </nav>
 
 <h1>FFLogs AAC シナジー ランキングビューア</h1>
 
 <div class="tabs">
-  <div class="tab active" data-mode="taken">返したDPS(シナジーを貰った側)</div>
-  <div class="tab" data-mode="given">返されたDPS(シナジーを与えた側)</div>
+  <div class="tab active" data-mode="taken">Taken (被シナジー)</div>
+  <div class="tab" data-mode="given">Given (与シナジー)</div>
 </div>
 
 <div class="panel">
@@ -180,15 +180,15 @@ function render() {
 
   // taken: シナジーを貰う側 -> そのシナジーで「DPSを返した」量
   // given: シナジーを与える側 -> その付与によって「DPSを返された」量
-  const buffLabel = mode === 'taken' ? '受けたシナジー' : '与えたシナジー';
-  const dpsLabel = mode === 'taken' ? '返したDPS' : '返されたDPS';
+  const buffLabel = mode === 'taken' ? '被シナジー' : '与シナジー';
+  const dpsLabel = 'DPS';
   const cols = mode === 'taken'
     ? [['_viewRank', '表示順位'], ['job', 'ジョブ(ジョブ内順位)'], ['player', 'プレイヤー(地域)'],
        ['buff_received', buffLabel], ['dps_value', dpsLabel],
-       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成(8人)'], ['report', 'ログ']]
+       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成(8人)'], ['report', 'リンク']]
     : [['_viewRank', '表示順位'], ['job', 'ジョブ(ジョブ内順位)'], ['player', 'プレイヤー(地域)'],
        ['buff_given', buffLabel], ['dps_value', dpsLabel],
-       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成(8人)'], ['report', 'ログ']];
+       ['is_own_ranked_log', '本人/同席'], ['duration_sec', '討伐時間'], ['party_comp_others', '編成(8人)'], ['report', 'リンク']];
 
   const leftCols = new Set(['job', buffCol]);
   const thead = document.querySelector('#table thead');
@@ -217,7 +217,7 @@ function render() {
     <td>${ownBadge(r.is_own_ranked_log)}</td>
     <td>${formatDuration(r.duration_sec)}</td>
     <td>${partyCompFullHtml(r.job, r.party_comp_others)}</td>
-    <td><a href="${reportUrl(r.report_code, r.fight_id)}" target="_blank">開く</a></td>
+    <td><a href="${reportUrl(r.report_code, r.fight_id)}" target="_blank">ログ</a></td>
   </tr>`;
   }).join('');
   tbody.querySelectorAll('[data-filter-type]').forEach(el => el.addEventListener('click', () => {
