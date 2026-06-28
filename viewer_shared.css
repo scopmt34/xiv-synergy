@@ -75,7 +75,11 @@ select, input[type=text], input[type=number] {
   min-width: 110px;
 }
 input[type=number] { min-width: 80px; }
-.dur-label { color: var(--muted); font-size: 11px; white-space: nowrap; }
+/* .filters-col .range-pair input.dur-part で高特異度(0,3,1)にして width:100% / flex:1 を上書き */
+.filters-col .range-pair input.dur-part { width: 48px; min-width: 48px; flex: none; padding: 0 4px; text-align: center; }
+input.dur-part::-webkit-inner-spin-button,
+input.dur-part::-webkit-outer-spin-button { display: none; }
+input.dur-part { -moz-appearance: textfield; }
 .range-pair { display: flex; align-items: center; gap: 4px; }
 .range-pair input[type=number] { min-width: 70px; }
 input[type=file] { color: var(--muted); font-size: 13px; }
