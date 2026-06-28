@@ -213,8 +213,8 @@ function partyCompFullHtml(selfJob, othersCsv, compCounts) {
     if (reqCount > 0) {
       if (occ < reqCount) {
         if (occ === 0) {
-          // 1つ目: 黄色。selfは.self枠が対応済み; non-selfはcomp-primaryクラス付与
-          if (!it.self) extraClass = 'comp-primary';
+          // 1つ目: selfは黄色(.self枠)で対応済み; non-selfは青色(comp-filtered)
+          if (!it.self) extraClass = 'comp-filtered';
           filterType = 'comp';    // クリック → フィルター削除
         } else {
           // 2つ目以降: 青色

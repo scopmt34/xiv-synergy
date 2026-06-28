@@ -132,9 +132,8 @@ a:hover { text-decoration: underline; }
 .cell-filter:hover { text-decoration: underline; }
 /* 編成列: 常に1px borderで幅を確保し、ハイライト時に色を変える(outlineはレイアウトに影響しないため使わない) */
 .partycomp .jobchip { border: 1px solid transparent; border-radius: 5px; }
-.partycomp .jobchip.self   { border-color: #ffd24a; }          /* self: 金色(常時) */
-.partycomp .jobchip.comp-primary  { border-color: rgba(255, 210, 74, 0.8); }  /* 編成フィルター1つ目: 黄色 */
-.partycomp .jobchip.comp-filtered { border-color: rgba(91, 157, 255, 0.65); } /* 編成フィルター2つ目: 青色 */
+.partycomp .jobchip.self          { border-color: #ffd24a; }               /* self: 黄色(順位ジョブ表示) */
+.partycomp .jobchip.comp-filtered { border-color: rgba(91, 157, 255, 0.65); } /* 編成フィルター: 青色 */
 
 .dropdown { position: relative; min-width: 140px; }
 .dd-btn {
