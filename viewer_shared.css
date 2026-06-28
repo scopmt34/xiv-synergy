@@ -56,7 +56,7 @@ p { line-height: 1.7; }
 .field label { font-size: 12px; color: var(--muted); white-space: nowrap; }
 
 .layout-2col { display: flex; gap: 24px; align-items: flex-start; }
-.filters-col { width: 260px; flex: none; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 16px; }
+.filters-col { width: 260px; flex: none; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
 .filters-col .field { width: 100%; }
 .filters-col .dropdown,
 .filters-col input[type=text], .filters-col input[type=number] { width: 100%; min-width: 0; }
@@ -183,8 +183,8 @@ a:hover { text-decoration: underline; }
 .dd-count:hover { background: #34466a; }
 
 #chart-section h2 { margin-bottom: 6px; }
-.chart-wrap { max-width: 860px; margin: 0 auto; }
-.bar-legend { display: flex; gap: 10px; font-size: 12px; color: var(--muted); max-width: 860px; margin: 0 auto 6px auto; }
+.chart-wrap { max-width: 860px; }
+.bar-legend { display: flex; gap: 10px; font-size: 12px; color: var(--muted); max-width: 860px; margin-bottom: 6px; }
 .bar-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .legend-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--accent); }
 .legend-swatch.legend-top1 { opacity: 0.35; }
