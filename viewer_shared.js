@@ -195,18 +195,38 @@ function formatDuration(sec) {
   const m = Math.floor(sec / 60), s = sec % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
-function partyCompFullHtml(selfJob, othersCsv, compSet, jobSet) {
+function partyCompFullHtml(selfJob, othersCsv, compCounts) {
   const others = othersCsv ? othersCsv.split(',').filter(j => JOB_ORDER.includes(j)) : [];
   const list = others.map(j => ({ job: j, self: false })).concat([{ job: selfJob, self: true }]);
-  list.sort((a, b) => jobOrderIndex(a.job) - jobOrderIndex(b.job));
-  const compSeen = new Set();
+  // 同ジョブが複数いる場合はselfを先頭に(selfの金色枠を1つ目ハイライトとして扱う)
+  list.sort((a, b) => {
+    const d = jobOrderIndex(a.job) - jobOrderIndex(b.job);
+    return d !== 0 ? d : (a.self ? -1 : 1);
+  });
+  const occurrences = new Map();
   return `<span class="partycomp">${list.map(it => {
+    const occ = occurrences.get(it.job) || 0;
+    occurrences.set(it.job, occ + 1);
+    const reqCount = compCounts ? (compCounts.get(it.job) || 0) : 0;
     let extraClass = '';
-    if (compSet && compSet.has(it.job) && !compSeen.has(it.job)) {
-      compSeen.add(it.job);
-      extraClass = (jobSet && jobSet.has(it.job)) ? 'job-comp-filtered' : 'comp-filtered';
+    let filterType = 'comp';
+    if (reqCount > 0) {
+      if (occ < reqCount) {
+        if (occ === 0) {
+          // 1つ目: 黄色。selfは.self枠が対応済み; non-selfはcomp-primaryクラス付与
+          if (!it.self) extraClass = 'comp-primary';
+          filterType = 'comp';    // クリック → フィルター削除
+        } else {
+          // 2つ目以降: 青色
+          extraClass = 'comp-filtered';
+          filterType = 'comp-dec'; // クリック → カウント−1
+        }
+      } else {
+        // 強調なし・同ジョブ: クリック → カウント+1
+        filterType = 'comp-inc';
+      }
     }
-    return jobChip(it.job, true, it.self, 'comp', extraClass);
+    return jobChip(it.job, true, it.self, filterType, extraClass);
   }).join('')}</span>`;
 }
 function buffIconUrl(icon) {

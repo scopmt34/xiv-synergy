@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FFLogs シナジー ランキングビューア</title>
-<link rel="stylesheet" href="viewer_shared.css?v=19">
+<link rel="stylesheet" href="viewer_shared.css?v=20">
 </head>
 <body>
 
@@ -45,7 +45,7 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=19"></script>
+<script src="viewer_shared.js?v=20"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
@@ -132,6 +132,21 @@ function applyTableFilterClick(type, value) {
   else if (type === 'comp') {
     if (ddComp.counts.has(value)) { ddComp.counts.delete(value); ddComp.values.delete(value); }
     else { ddComp.counts.set(value, 1); ddComp.values.add(value); }
+    updateDropdownUI(ddComp);
+  } else if (type === 'comp-dec') {
+    if (ddComp.counts.has(value)) {
+      const cur = ddComp.counts.get(value);
+      if (cur <= 1) { ddComp.counts.delete(value); ddComp.values.delete(value); }
+      else ddComp.counts.set(value, cur - 1);
+      updateDropdownUI(ddComp);
+    }
+  } else if (type === 'comp-inc') {
+    if (ddComp.counts.has(value)) {
+      const cur = ddComp.counts.get(value);
+      ddComp.counts.set(value, Math.min(cur + 1, ddComp.maxCount || 3));
+    } else {
+      ddComp.counts.set(value, 2); ddComp.values.add(value);
+    }
     updateDropdownUI(ddComp);
   }
   render();
@@ -220,7 +235,7 @@ function render() {
     <td>${parseFloat(r.dps_value).toFixed(1)}</td>
     <td>${ownBadge(r.is_own_ranked_log)}</td>
     <td>${formatDuration(r.duration_sec)}</td>
-    <td>${partyCompFullHtml(r.job, r.party_comp_others, new Set(ddComp.counts.keys()), ddJob.values)}</td>
+    <td>${partyCompFullHtml(r.job, r.party_comp_others, ddComp.counts)}</td>
     <td><a href="${reportUrl(r.report_code, r.fight_id)}" target="_blank">ログ</a></td>
   </tr>`;
   }).join('');

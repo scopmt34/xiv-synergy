@@ -122,19 +122,19 @@ a:hover { text-decoration: underline; }
 .jobdot.mini { width: 18px; height: 18px; font-size: 9px; line-height: 18px; }
 .jobicon { display: inline-block; width: 18px; height: 18px; border-radius: 4px; flex: none; object-fit: cover; }
 .jobicon.mini { width: 20px; height: 20px; border-radius: 4px; }
-.jobicon.self { outline: 2px solid #ffd24a; outline-offset: 1px; }
 .jobchip.self { font-weight: 700; }
 .bossicon { display: inline-block; width: 20px; height: 20px; border-radius: 50%; flex: none; object-fit: cover; vertical-align: middle; margin-right: 5px; }
-.partycomp { display: inline-flex; gap: 2px; flex-wrap: nowrap; }
+.partycomp { display: inline-flex; gap: 0; flex-wrap: nowrap; }
 .buffchip { display: inline-flex; align-items: center; gap: 5px; }
 .buffchip img { width: 18px; height: 18px; border-radius: 3px; }
 .tablewrap { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
 .cell-filter { cursor: pointer; }
 .cell-filter:hover { text-decoration: underline; }
-/* 編成フィルター中のジョブアイコン強調(左端のみ)。.self アイコンはゴールド枠が優先されるため除外 */
-.comp-filtered .jobicon:not(.self), .comp-filtered .jobdot { outline: 2px solid rgba(91, 157, 255, 0.65); outline-offset: 2px; border-radius: 4px; }
-/* ジョブフィルターと編成フィルターが重なる場合はジョブフィルターを優先(ゴールド) */
-.job-comp-filtered .jobicon:not(.self), .job-comp-filtered .jobdot { outline: 2px solid rgba(255, 210, 74, 0.75); outline-offset: 2px; border-radius: 4px; }
+/* 編成列: 常に1px borderで幅を確保し、ハイライト時に色を変える(outlineはレイアウトに影響しないため使わない) */
+.partycomp .jobchip { border: 1px solid transparent; border-radius: 5px; }
+.partycomp .jobchip.self   { border-color: #ffd24a; }          /* self: 金色(常時) */
+.partycomp .jobchip.comp-primary  { border-color: rgba(255, 210, 74, 0.8); }  /* 編成フィルター1つ目: 黄色 */
+.partycomp .jobchip.comp-filtered { border-color: rgba(91, 157, 255, 0.65); } /* 編成フィルター2つ目: 青色 */
 
 .dropdown { position: relative; min-width: 140px; }
 .dd-btn {
