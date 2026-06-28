@@ -75,7 +75,7 @@ select, input[type=text], input[type=number] {
   min-width: 110px;
 }
 input[type=number] { min-width: 80px; }
-input.dur-part { min-width: 46px; width: 46px; }
+.dur-label { color: var(--muted); font-size: 11px; white-space: nowrap; }
 .range-pair { display: flex; align-items: center; gap: 4px; }
 .range-pair input[type=number] { min-width: 70px; }
 input[type=file] { color: var(--muted); font-size: 13px; }
