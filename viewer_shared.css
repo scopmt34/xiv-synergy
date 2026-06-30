@@ -229,3 +229,19 @@ a:hover { text-decoration: underline; }
 }
 .comp-count-chip:hover { background: #2a3a55; }
 .comp-count-chip img { width: 14px; height: 14px; border-radius: 3px; }
+
+@media (max-width: 768px) {
+  body { padding: 12px; }
+  .layout-2col { flex-direction: column; }
+  .filters-col {
+    width: 100%;
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    overflow-x: hidden;
+  }
+  .data-col { width: 100%; }
+  .tablewrap { max-height: 60vh; }
+  .tabs { flex-wrap: wrap; }
+  th, td { padding: 6px 8px; font-size: 12px; }
+}

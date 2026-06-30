@@ -2,8 +2,9 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>シナジー ランキング</title>
-<link rel="stylesheet" href="viewer_shared.css?v=38">
+<link rel="stylesheet" href="viewer_shared.css?v=39">
 </head>
 <body>
 
@@ -51,7 +52,7 @@
   </div>
 </div>
 
-<script src="viewer_shared.js?v=38"></script>
+<script src="viewer_shared.js?v=39"></script>
 <script>
 const ddTier = createMultiDropdown('f-tier', { single: true });
 const ddBoss = createMultiDropdown('f-boss', { single: true });
@@ -228,7 +229,8 @@ function render() {
 
   const buffNameKey = mode === 'taken' ? 'buff_received' : 'buff_given';
   const tbody = document.querySelector('#table tbody');
-  tbody.innerHTML = rows.slice(0, 500).map(r => {
+  const renderLimit = window.innerWidth < 768 ? 100 : 500;
+  tbody.innerHTML = rows.slice(0, renderLimit).map(r => {
     const buffName = r[buffNameKey];
     const icon = BUFF_ICON[buffName] || buffIconUrl(r.buff_icon);
     return `<tr>

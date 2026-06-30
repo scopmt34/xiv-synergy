@@ -286,7 +286,7 @@ function cleanRows(rows, mode) {
   return rows.filter(r => r.job !== 'Unknown' && r[buffCol] !== 'Medicated');
 }
 async function fetchCsvRows(mode) {
-  const res = await fetch(csvPath(mode), { cache: 'no-store' });
+  const res = await fetch(csvPath(mode));
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const text = await res.text();
   return cleanRows(toObjects(parseCSV(stripBOM(text))), mode);
