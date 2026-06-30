@@ -31,7 +31,7 @@
       <div class="field"><label>地域</label><div class="dropdown" id="f-region"></div></div>
       <div class="field" id="own-field"><label>本人/同席</label><div class="dropdown" id="f-own"></div></div>
       <div class="field"><label>取得ランク数</label>
-        <input type="number" id="f-rank-max" min="1" max="100" placeholder="空欄=全件 (1〜100)">
+        <input type="number" id="f-rank-max" min="1" max="20" placeholder="空欄=全件 (1〜20)">
       </div>
       <div class="field"><label id="sort-mode-label">並び順 / 表示</label>
         <div class="toggle-pair" id="sort-mode">
@@ -70,13 +70,7 @@ const ddRegion = createMultiDropdown('f-region');
 const ddOwn = createMultiDropdown('f-own');
 fillMultiDropdown(ddTier, TIERS.map(t => t.key), null, k => TIERS.find(t => t.key === k).label);
 fillMultiDropdown(ddOwn, ['True', 'False'], null, v => v === 'True' ? '本人' : '同席');
-ddTier.onChange = () => {
-  const tier = [...ddTier.values][0];
-  const bosses = (TIERS.find(t => t.key === tier)?.bosses || [])
-    .filter(b => data.some(r => r.boss === b));
-  fillMultiDropdown(ddBoss, bosses, bossIcon, bossJp);
-  render();
-};
+ddTier.onChange = () => { loadMode(mode); };
 [ddBoss, ddJob, ddBuffSingle, ddBuffMulti, ddRegion, ddOwn].forEach(dd => dd.onChange = render);
 
 let sortMetric = 'avg';
@@ -91,10 +85,11 @@ document.querySelectorAll('#sort-mode .toggle-btn').forEach(btn => btn.addEventL
 
 let mode = 'taken';
 let data = [];
-const dataCache = { taken: null, given: null };
+const dataCache = {};
 
 function applyData(rows) {
-  dataCache[mode] = rows;
+  const tier = [...ddTier.values][0] || TIERS[0].key;
+  dataCache[`${mode}_${tier}`] = rows;
   data = rows;
 
   const taken = mode === 'taken';
@@ -108,12 +103,8 @@ function applyData(rows) {
   const maxRank = ranks.length ? ranks.reduce((a, b) => a > b ? a : b, 0) : null;
   document.getElementById('f-rank-max').placeholder = maxRank ? `空欄=全件 (最大${maxRank})` : '空欄=全件';
 
-  const tier = [...ddTier.values][0] || TIERS[0].key;
-  if (!ddTier.values.size) { ddTier.values.add(TIERS[0].key); updateDropdownUI(ddTier); }
   const allBosses = uniqueSorted(data, 'boss').sort((a, b) => BOSS_ORDER.indexOf(a) - BOSS_ORDER.indexOf(b));
-  const tierBosses = allBosses.filter(b => tierOfBoss(b) === tier);
-  const bosses = tierBosses.length ? tierBosses : allBosses;
-  fillMultiDropdown(ddBoss, bosses, bossIcon, bossJp);
+  fillMultiDropdown(ddBoss, allBosses, bossIcon, bossJp);
   const jobs = uniqueSorted(data, 'job').sort((a, b) => jobOrderIndex(a) - jobOrderIndex(b));
   fillMultiDropdown(ddJob, jobs, j => jobMeta(j).icon, j => jobMeta(j).jp);
   const buffCol = taken ? 'buff_received' : 'buff_given';
@@ -138,11 +129,14 @@ function applyData(rows) {
 
 async function loadMode(m) {
   mode = m;
-  if (dataCache[m]) { applyData(dataCache[m]); return; }
+  if (!ddTier.values.size) { ddTier.values.add(TIERS[0].key); updateDropdownUI(ddTier); }
+  const tier = [...ddTier.values][0];
+  const cacheKey = `${m}_${tier}`;
+  if (dataCache[cacheKey]) { applyData(dataCache[cacheKey]); return; }
   document.getElementById('meta').textContent = '読み込み中...';
   let rows;
   try {
-    rows = await fetchCsvRows(m);
+    rows = await fetchCsvRows(m, tier);
   } catch (e) {
     document.getElementById('meta').textContent = '読み込みに失敗しました。start_viewer.bat でローカルサーバーを起動してください。';
     return;
@@ -193,7 +187,7 @@ function render() {
 
 function renderTaken() {
   const rankRaw = parseInt(document.getElementById('f-rank-max').value);
-  const rankCutoff = isNaN(rankRaw) ? NaN : Math.max(1, Math.min(100, rankRaw));
+  const rankCutoff = isNaN(rankRaw) ? NaN : Math.max(1, Math.min(20, rankRaw));
   const rows = data.filter(r =>
     (!ddBoss.values.size || ddBoss.values.has(r.boss)) &&
     (!ddJob.values.size || ddJob.values.has(r.job)) &&
@@ -221,7 +215,7 @@ function renderTaken() {
 function renderGiven() {
   const buffValues = ddBuffMulti.values;
   const rankRaw = parseInt(document.getElementById('f-rank-max').value);
-  const rankCutoff = isNaN(rankRaw) ? NaN : Math.max(1, Math.min(100, rankRaw));
+  const rankCutoff = isNaN(rankRaw) ? NaN : Math.max(1, Math.min(20, rankRaw));
   const rows = data.filter(r =>
     (!ddBoss.values.size || ddBoss.values.has(r.boss)) &&
     (!ddRegion.values.size || ddRegion.values.has(r.region)) &&

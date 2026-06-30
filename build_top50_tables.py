@@ -33,7 +33,7 @@ TIER_BOSSES = [
     ]),
 ]
 
-TOP_N = 100
+TOP_N = 20
 
 
 def load_boss(boss_id, name, direction, tier_key):
@@ -49,21 +49,21 @@ def load_boss(boss_id, name, direction, tier_key):
 
 
 def build(direction, buff_col):
-    out_path = os.path.join(OUTPUT_DIR, f"ALL_top100_{direction}_by_job_and_synergy.csv")
-    with open(out_path, "w", encoding="utf-8-sig", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["tier", "boss_id", "boss", "job", buff_col, "buff_icon", "rank", "player",
-                    "dps_value", "region", "server", "is_own_ranked_log", "duration_sec",
-                    "party_comp_others", "report_code", "fight_id"])
+    for tier_key, tier_label, bosses in TIER_BOSSES:
+        out_path = os.path.join(OUTPUT_DIR, f"{tier_key}_top{TOP_N}_{direction}_by_job_and_synergy.csv")
+        with open(out_path, "w", encoding="utf-8-sig", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["tier", "boss_id", "boss", "job", buff_col, "buff_icon", "rank", "player",
+                        "dps_value", "region", "server", "is_own_ranked_log", "duration_sec",
+                        "party_comp_others", "report_code", "fight_id"])
 
-        for tier_key, tier_label, bosses in TIER_BOSSES:
             for boss_id, name in bosses:
                 path = os.path.join(OUTPUT_DIR, f"{boss_id}_{name}_{direction}_synergy.csv")
                 if not os.path.exists(path):
-                    print(f"[{direction}] SKIP (未取得): {name}")
+                    print(f"[{direction}/{tier_key}] SKIP (未取得): {name}")
                     continue
                 rows = load_boss(boss_id, name, direction, tier_key)
-                print(f"[{direction}] {name}: {len(rows)}行 読み込み")
+                print(f"[{direction}/{tier_key}] {name}: {len(rows)}行 読み込み")
 
                 groups = {}
                 for r in rows:
@@ -75,7 +75,7 @@ def build(direction, buff_col):
                                     i, r["player"], r["dps_value"], r["region"], r["server"],
                                     r["is_own_ranked_log"], r["duration_sec"],
                                     r["party_comp_others"], r["report_code"], r["fight_id"]])
-    print(f"出力: {out_path}")
+        print(f"出力: {out_path}")
 
 
 def main():

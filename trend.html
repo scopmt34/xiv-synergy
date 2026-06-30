@@ -110,9 +110,12 @@ function renderTable(entries, icon1Fn, label1Fn, icon2Fn, label2Fn) {
 
 async function main() {
   document.getElementById('meta').textContent = '読み込み中...';
-  let given, taken;
+  let given = [], taken = [];
   try {
-    [given, taken] = await Promise.all([fetchCsvRows('given'), fetchCsvRows('taken')]);
+    await Promise.all(PATCHES.flatMap(p => [
+      fetchCsvRows('given', p.key).then(rows => given.push(...rows)),
+      fetchCsvRows('taken', p.key).then(rows => taken.push(...rows)),
+    ]));
   } catch {
     document.getElementById('meta').textContent = '読み込みに失敗しました。';
     return;

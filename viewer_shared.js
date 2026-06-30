@@ -276,8 +276,8 @@ function toObjects(rows) {
 function uniqueSorted(rows, key) {
   return Array.from(new Set(rows.map(r => r[key]))).sort();
 }
-function csvPath(m) {
-  return `output/ALL_top100_${m}_by_job_and_synergy.csv`;
+function csvPath(m, tier) {
+  return `output/${tier}_top20_${m}_by_job_and_synergy.csv`;
 }
 // "Medicated"(薬品効果)は食事/薬の被ダメ補正であり、ジョブ間シナジーではないため除外。
 // 同様に付与元ジョブが特定できない"Unknown"の行も除外する。
@@ -285,8 +285,8 @@ function cleanRows(rows, mode) {
   const buffCol = mode === 'taken' ? 'buff_received' : 'buff_given';
   return rows.filter(r => r.job !== 'Unknown' && r[buffCol] !== 'Medicated');
 }
-async function fetchCsvRows(mode) {
-  const res = await fetch(csvPath(mode));
+async function fetchCsvRows(mode, tier) {
+  const res = await fetch(csvPath(mode, tier));
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const text = await res.text();
   return cleanRows(toObjects(parseCSV(stripBOM(text))), mode);
